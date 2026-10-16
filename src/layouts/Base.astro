@@ -7,7 +7,7 @@ import "../styles/global.css";
 interface Props {
 	title: string;
 	category?: string;
-	/** Send visitors who haven't chosen a player to Settings first (admins are never redirected). */
+	/** On a device's first visit, send visitors without a chosen player to Settings (admins are never redirected). */
 	requirePlayer?: boolean;
 }
 
@@ -45,8 +45,11 @@ const pageCtx = createPublicPageContext({
 			redirectToSettings && (
 				<script is:inline>
 					try {
-						if (!localStorage.getItem("puntilla:player"))
+						// Only on the very first visit: afterwards people may browse without choosing a player.
+						if (!localStorage.getItem("puntilla:player") && !localStorage.getItem("puntilla:welcomed")) {
+							localStorage.setItem("puntilla:welcomed", "1");
 							location.replace("/settings?from=" + encodeURIComponent(location.pathname + location.search + location.hash));
+						}
 					} catch {}
 				</script>
 			)
