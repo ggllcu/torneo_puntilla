@@ -13,7 +13,7 @@ export const POST: APIRoute = async ({ params, request }) => {
 	const match = await loadMatch(params.id ?? "");
 	if (!match) return json({ error: "Match not found" }, 404);
 
-	const body: { sets?: unknown } | null = await request.json().catch(() => null);
+	const body = (await request.json().catch(() => null)) as { sets?: unknown } | null;
 	const sets = body?.sets;
 	const error = checkSubmission(match, sets);
 	if (error) return json({ error }, 400);
