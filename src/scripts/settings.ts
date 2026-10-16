@@ -1,6 +1,7 @@
 // Settings page: who am I (stored on the device) and match reminder notifications.
 import { CATEGORY_LABEL } from "../lib/display";
 import { installHint, isPastMatch, pushSupport, urlBase64ToUint8Array } from "../lib/push-client";
+import { safeReturnPath } from "../lib/routes";
 import { formatTime } from "../lib/schedule";
 import type { Category } from "../lib/types";
 
@@ -78,7 +79,13 @@ if (root) {
 			.join("");
 	}
 
+	// Arrived here because no player was chosen yet: welcome, then offer to continue to the page they wanted.
+	const returnTo = safeReturnPath(new URLSearchParams(location.search).get("from"));
+
 	function renderChosen() {
+		el("welcome").hidden = !(returnTo && !player);
+		el("continue").hidden = !(returnTo && player);
+		if (returnTo) el("continue").setAttribute("href", returnTo);
 		el("chosen").hidden = !player;
 		el("chosen-name").textContent = player ? `You: ${player.name}` : "";
 		for (const hint of document.querySelectorAll("[data-you]")) {

@@ -7,9 +7,10 @@ Astro.response.headers.set("Cache-Control", "no-store");
 const admin = isAdmin(Astro.cookies);
 ---
 
-<Base title="Settings">
+<Base title="Settings" requirePlayer={false}>
 	<a class="back" href="/">← Home</a>
 	<h1>Settings</h1>
+	<p id="welcome" class="welcome" hidden>Choose your name to get started.</p>
 
 	<div id="settings" data-vapid={vapidPublicKey()}>
 		<section class="panel">
@@ -19,6 +20,7 @@ const admin = isAdmin(Astro.cookies);
 				<span id="chosen-name"></span>
 				<button id="clear" class="link" type="button">Clear</button>
 			</p>
+			<a id="continue" class="continue" href="/" hidden>Continue →</a>
 			<input id="search" type="search" placeholder="Search your name" autocomplete="off" />
 			<div id="players" class="players" role="listbox" aria-label="Players"></div>
 		</section>
@@ -96,6 +98,28 @@ const admin = isAdmin(Astro.cookies);
 	.panel p {
 		margin: 4px 0 10px;
 	}
+	.welcome {
+		margin: 0 0 12px;
+		padding: 12px 14px;
+		border-radius: var(--radius);
+		background: var(--accent);
+		color: var(--accent-text);
+		font-weight: 700;
+	}
+	.continue {
+		display: block;
+		margin: 0 0 10px;
+		padding: 12px;
+		border-radius: 999px;
+		background: var(--accent);
+		color: var(--accent-text);
+		text-align: center;
+		font-weight: 800;
+		text-decoration: none;
+	}
+	.welcome[hidden],
+	.continue[hidden],
+	.admin-form[hidden],
 	.chosen[hidden] {
 		display: none;
 	}

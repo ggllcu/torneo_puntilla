@@ -31,6 +31,8 @@
 [data-category="mixed"] { --cat: #2e9d57; }
 
 *, *::before, *::after { box-sizing: border-box; }
+/* Components set display on their own classes; never let that override the hidden attribute. */
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body {
 	margin: 0;
