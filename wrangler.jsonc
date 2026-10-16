@@ -1,6 +1,8 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "puntilla",
+	"account_id": "6f58a6845b0fc07a79e61cdad8c1efca",
+	"workers_dev": true,
 	"main": "./src/worker.ts",
 	"compatibility_date": "2026-02-24",
 	"compatibility_flags": ["nodejs_compat"],
