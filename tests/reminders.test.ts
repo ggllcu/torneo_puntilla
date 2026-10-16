@@ -173,3 +173,14 @@ describe("playerMatches", () => {
 		expect(playerMatches(s, "p-nobody", at("11:00:00"))).toEqual([]);
 	});
 });
+
+describe("playerMatches with includePast (calendar highlighting)", () => {
+	test("includes finished and already-started matches", () => {
+		const s = snapshot([m1({ finished: true }), m1({ id: "m2", slot: 3 })]);
+		expect(playerMatches(s, "p-dani", at("12:00:00"), { includePast: true }).map((m) => [m.matchId, m.role])).toEqual([
+			["m1", "player"],
+			["m2", "player"],
+		]);
+		expect(playerMatches(s, "p-dani", at("12:00:00")).map((m) => m.matchId)).toEqual(["m2"]);
+	});
+});
