@@ -95,7 +95,6 @@ if (root) {
 		controls.hidden = !(support === "supported" && vapid && player);
 		el("toggle").setAttribute("aria-pressed", String(pushOn));
 		el("toggle").textContent = pushOn ? "Notifications on" : "Notifications off";
-		el("test").hidden = !pushOn;
 		el("push-status").textContent = status;
 	}
 
@@ -188,14 +187,6 @@ if (root) {
 		} finally {
 			el("toggle").removeAttribute("disabled");
 		}
-	});
-
-	el("test").addEventListener("click", async () => {
-		const subscription = await currentSubscription();
-		if (!subscription) return renderPush("This device isn't registered any more: turn notifications off and on.");
-		const res = await post("/api/push/test", { endpoint: subscription.endpoint });
-		const body = (await res.json().catch(() => ({}))) as { error?: string };
-		renderPush(res.ok ? "Test notification sent." : (body.error ?? "Could not send the test notification."));
 	});
 
 	(async () => {
