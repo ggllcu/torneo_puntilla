@@ -21,6 +21,15 @@ Astro.response.headers.set("Cache-Control", "no-store");
 			<div id="players" class="players" role="listbox" aria-label="Players"></div>
 		</section>
 
+		<section id="install" class="panel" hidden>
+			<h2>Install the app</h2>
+			<p class="muted">
+				Add La Puntilla to your home screen to open it like an app: in Chrome tap <strong>⋮</strong> (top right), then{" "}
+				<strong>Install app</strong> or <strong>Add to Home screen</strong>.
+			</p>
+			<button id="install-button" class="toggle" type="button" hidden>Install</button>
+		</section>
+
 		<section class="panel">
 			<h2>Notifications</h2>
 			<p id="push-note" class="muted">Choose your name first.</p>

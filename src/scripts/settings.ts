@@ -1,6 +1,6 @@
 // Settings page: who am I (stored on the device) and match reminder notifications.
 import { CATEGORY_LABEL } from "../lib/display";
-import { isPastMatch, pushSupport, urlBase64ToUint8Array } from "../lib/push-client";
+import { installHint, isPastMatch, pushSupport, urlBase64ToUint8Array } from "../lib/push-client";
 import { formatTime } from "../lib/schedule";
 import type { Category } from "../lib/types";
 
@@ -48,11 +48,12 @@ if (root) {
 	let player = store.get<Player>(PLAYER_KEY);
 	let pushOn = store.get<string>(PUSH_KEY) === "on";
 
+	const standalone =
+		matchMedia("(display-mode: standalone)").matches ||
+		(navigator as unknown as { standalone?: boolean }).standalone === true;
 	const support = pushSupport({
 		userAgent: navigator.userAgent,
-		standalone:
-			matchMedia("(display-mode: standalone)").matches ||
-			(navigator as unknown as { standalone?: boolean }).standalone === true,
+		standalone,
 		hasPushManager: "PushManager" in window,
 		hasServiceWorker: "serviceWorker" in navigator,
 		permission: "Notification" in window ? Notification.permission : "default",
@@ -192,6 +193,26 @@ if (root) {
 	});
 	el("search").addEventListener("input", (event) => renderPlayers((event.target as unknown as { value: string }).value));
 	el("clear").addEventListener("click", () => choose(null));
+
+	// Android: notifications work in the browser too, but suggest installing the app.
+	if (installHint({ userAgent: navigator.userAgent, standalone }) === "android") {
+		el("install").hidden = false;
+		type InstallPrompt = Event & { prompt(): Promise<void> };
+		let deferred: InstallPrompt | null = null;
+		window.addEventListener("beforeinstallprompt", (event) => {
+			event.preventDefault();
+			deferred = event as InstallPrompt;
+			el("install-button").hidden = false;
+		});
+		el("install-button").addEventListener("click", async () => {
+			await deferred?.prompt();
+			deferred = null;
+			el("install-button").hidden = true;
+		});
+		window.addEventListener("appinstalled", () => {
+			el("install").hidden = true;
+		});
+	}
 
 	el("toggle").addEventListener("click", async () => {
 		el("toggle").setAttribute("disabled", "");

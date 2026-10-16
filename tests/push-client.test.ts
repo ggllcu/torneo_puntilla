@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { isPastMatch, pushSupport, urlBase64ToUint8Array } from "../src/lib/push-client";
+import { installHint, isPastMatch, pushSupport, urlBase64ToUint8Array } from "../src/lib/push-client";
 
 const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
 const ANDROID = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36";
@@ -42,4 +42,22 @@ describe("isPastMatch (settings: past games above the Next games line)", () => {
 		expect(isPastMatch({ start, finished: false }, at("2026-10-17T12:19:59Z"))).toBe(false);
 		expect(isPastMatch({ start, finished: false }, at("2026-10-17T12:20:00Z"))).toBe(true);
 	});
+});
+
+describe("installHint", () => {
+	test("Android in the browser gets install instructions", () => {
+		expect(installHint({ userAgent: ANDROID, standalone: false })).toBe("android");
+	});
+	test("iPhone in Safari gets the iOS instructions", () => {
+		expect(installHint({ userAgent: IPHONE, standalone: false })).toBe("ios");
+	});
+	test("already installed, or desktop: nothing", () => {
+		expect(installHint({ userAgent: ANDROID, standalone: true })).toBeNull();
+		expect(installHint({ userAgent: IPHONE, standalone: true })).toBeNull();
+		expect(installHint({ userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Chrome/130.0", standalone: false })).toBeNull();
+	});
+});
+
+test("Android notifications stay available even when not installed", () => {
+	expect(pushSupport({ ...base, userAgent: ANDROID, standalone: false })).toBe("supported");
 });
