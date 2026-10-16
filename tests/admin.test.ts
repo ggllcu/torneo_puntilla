@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { adminParam, isAdminToken } from "../src/lib/admin";
+import { isAdminToken, parsePasswordBody } from "../src/lib/admin";
 
 const SECRET = "k3J9x-Qm2v8Rr4tZp7Ya1Lw6Ns0Bc5Hd";
 
@@ -17,12 +17,14 @@ describe("isAdminToken", () => {
 	});
 });
 
-describe("adminParam", () => {
-	test("reads ?admin and gives the URL without it", () => {
-		expect(adminParam(new URL("https://x.dev/mens/qualifiers?admin=abc"))).toEqual({ value: "abc", cleanUrl: "/mens/qualifiers" });
-		expect(adminParam(new URL("https://x.dev/?admin=off&x=1#m"))).toEqual({ value: "off", cleanUrl: "/?x=1" });
+describe("parsePasswordBody", () => {
+	test("reads a non-empty password", () => {
+		expect(parsePasswordBody({ password: "secret" })).toBe("secret");
 	});
-	test("no parameter", () => {
-		expect(adminParam(new URL("https://x.dev/mens/qualifiers"))).toBeNull();
+	test("anything else", () => {
+		expect(parsePasswordBody({ password: "" })).toBeNull();
+		expect(parsePasswordBody({ password: 42 })).toBeNull();
+		expect(parsePasswordBody({ password: "x".repeat(201) })).toBeNull();
+		expect(parsePasswordBody(null)).toBeNull();
 	});
 });

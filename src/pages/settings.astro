@@ -1,8 +1,10 @@
 ---
 import Base from "../layouts/Base.astro";
+import { isAdmin } from "../lib/admin-env";
 import { vapidPublicKey } from "../lib/push-env";
 
 Astro.response.headers.set("Cache-Control", "no-store");
+const admin = isAdmin(Astro.cookies);
 ---
 
 <Base title="Settings">
@@ -43,11 +45,33 @@ Astro.response.headers.set("Cache-Control", "no-store");
 			<h2>Your matches</h2>
 			<ul id="matches" class="matches"><li class="muted">Choose your name to see your matches.</li></ul>
 		</section>
+
+		<section class="panel">
+			<h2>Admin</h2>
+			{
+				admin ? (
+					<>
+						<p class="muted">You're an admin: you can referee matches and change scores.</p>
+						<button id="admin-logout" class="link" type="button">Sign out</button>
+					</>
+				) : (
+					<>
+						<button id="admin-open" class="toggle" type="button">Become admin</button>
+						<form id="admin-form" class="admin-form" hidden>
+							<input id="admin-password" type="password" placeholder="Password" autocomplete="current-password" />
+							<button class="toggle" type="submit">Sign in</button>
+							<p id="admin-error" class="error" aria-live="polite" />
+						</form>
+					</>
+				)
+			}
+		</section>
 	</div>
 </Base>
 
 <script>
 	import "../scripts/settings";
+	import "../scripts/admin-settings";
 </script>
 
 <style>
@@ -71,6 +95,9 @@ Astro.response.headers.set("Cache-Control", "no-store");
 	}
 	.panel p {
 		margin: 4px 0 10px;
+	}
+	.chosen[hidden] {
+		display: none;
 	}
 	.chosen {
 		display: flex;
@@ -135,6 +162,15 @@ Astro.response.headers.set("Cache-Control", "no-store");
 		color: var(--accent);
 		font-weight: 600;
 		cursor: pointer;
+	}
+	.admin-form {
+		display: grid;
+		gap: 8px;
+	}
+	.error {
+		color: #c0392b;
+		font-weight: 600;
+		margin: 0;
 	}
 	.matches {
 		list-style: none;

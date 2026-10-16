@@ -1,5 +1,5 @@
-// Lightweight admin mode: whoever opens the site once with ?admin=<ADMIN_TOKEN> gets a cookie that shows
-// the Referee / Change score buttons and allows submitting scores. ?admin=off signs out.
+// Lightweight admin mode: entering the ADMIN_TOKEN password in Settings → "Become admin" sets a cookie that shows
+// the Referee / Change score buttons and allows submitting scores. Just a check, not real security.
 
 export const ADMIN_COOKIE = "puntilla_admin";
 
@@ -11,12 +11,9 @@ export function isAdminToken(value: string | undefined, secret: string | undefin
 	return diff === 0;
 }
 
-/** The ?admin value, and the same URL (path + other params) without it. */
-export function adminParam(url: URL): { value: string; cleanUrl: string } | null {
-	const value = url.searchParams.get("admin");
-	if (value === null) return null;
-	const params = new URLSearchParams(url.searchParams);
-	params.delete("admin");
-	const query = params.toString();
-	return { value, cleanUrl: url.pathname + (query ? `?${query}` : "") };
+export function parsePasswordBody(body: unknown): string | null {
+	const password = typeof body === "object" && body !== null ? (body as { password?: unknown }).password : null;
+	return typeof password === "string" && password.length > 0 && password.length <= 200 ? password : null;
 }
+
+export const ADMIN_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
