@@ -43,7 +43,7 @@ src/lib/schedule.ts                 match time computation + Canary formatting
 src/lib/standings.ts                group standings
 src/lib/display.ts                  score text, round labels, winner
 src/lib/data.ts                     emdash reads/writes → domain types (the only emdash-aware module)
-src/pages/index.astro               redirect → /mens/qualifiers
+src/pages/index.astro               home: three category buttons
 src/pages/[category]/[tab].astro    calendar
 src/components/CategoryNav.astro    dropdown + tabs
 src/components/MatchCard.astro      one match
@@ -274,7 +274,7 @@ tests/*.test.ts                     Vitest
 
 **Interfaces:**
 - Consumes: Tasks 2–4 (`loadSession`, `loadMatches`, `loadGroups`, `sortMatches`, `matchTime`, `formatTime`, `formatScore`, `winnerOf`, `roundLabel`, `computeStandings`, `CATEGORY_LABEL`)
-- Produces: URLs `/` → 302 to `/mens/qualifiers`; `/{mens|womens|mixed}/{qualifiers|finals}` (anything else → 404); each match card has DOM id `match-<id>`; the live region is `<main id="live">`.
+- Produces: URLs `/` → home page with three category buttons (Women's, Men's, Mixed — Saturday order of play) linking to the tab from `defaultTab(now)`; `/{mens|womens|mixed}/{qualifiers|finals}` (anything else → 404); each match card has DOM id `match-<id>`; the live region is `<main id="live">`.
 
 Page content (functional; styling is minimal, clean and mobile-first):
 - `CategoryNav`: a `<select>` with Men's / Women's / Mixed that navigates to the same tab in the chosen category (tiny inline script), plus two tab links, Qualifiers and Finals, with the active one marked.
