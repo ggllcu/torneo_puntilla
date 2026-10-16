@@ -47,6 +47,11 @@ export function matchStart(m: SnapshotMatch): Date {
 const playersOf = (s: Snapshot, teamId: string | null) => (teamId ? (s.teams.get(teamId)?.playerIds ?? []) : []);
 
 /** Each player in a match once, with their role; the player role wins over referee. */
+export function matchRoles(s: Snapshot, matchId: string): Map<string, Role> {
+	const m = s.matches.find((x) => x.id === matchId);
+	return m ? rolesIn(s, m) : new Map();
+}
+
 function rolesIn(s: Snapshot, m: SnapshotMatch): Map<string, Role> {
 	const roles = new Map<string, Role>();
 	for (const id of [...playersOf(s, m.team1Id), ...playersOf(s, m.team2Id)]) roles.set(id, "player");
@@ -112,4 +117,30 @@ export function playerMatches(
 			];
 		})
 		.sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
+/** The match that follows `matchId` on the same court and day (any category): the earliest unfinished one after it. */
+export function nextOnCourt(s: Snapshot, matchId: string): SnapshotMatch | null {
+	const done = s.matches.find((m) => m.id === matchId);
+	if (!done) return null;
+	const after = matchStart(done).getTime();
+	return (
+		s.matches
+			.filter((m) => m.id !== done.id && !m.finished && m.day === done.day && m.court === done.court)
+			.filter((m) => matchStart(m).getTime() > after)
+			.sort((a, b) => matchStart(a).getTime() - matchStart(b).getTime())[0] ?? null
+	);
+}
+
+/** "You are next!" — sent when the previous match on the court is completed. */
+export function nextUpPayload(s: Snapshot, matchId: string, role: Role): PushPayload {
+	const m = s.matches.find((x) => x.id === matchId);
+	if (!m) throw new Error(`Unknown match ${matchId}`);
+	const day = m.day === "saturday" ? "Sat" : "Sun";
+	return {
+		title: `You are next! Go to cancha ${m.court}`,
+		body: `${day} ${formatTime(matchStart(m))} · ${matchLabel(s, m)}`,
+		url: role === "referee" ? `/referee/${m.id}` : `${calendarPath(m.category, m.day)}#match-${m.id}`,
+		tag: `${m.id}:next`,
+	};
 }

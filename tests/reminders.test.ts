@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
 	dueReminders,
+	matchRoles,
 	matchStart,
+	nextOnCourt,
+	nextUpPayload,
 	playerMatches,
 	reminderPayload,
 	resendDecision,
@@ -183,5 +186,58 @@ describe("playerMatches with includePast (calendar highlighting)", () => {
 		]);
 		expect(playerMatches(s, "p-dani", at("12:00:00")).map((m) => m.matchId)).toEqual(["m2"]);
 		expect(playerMatches(s, "p-dani", at("12:00:00"), { includePast: true }).map((m) => m.finished)).toEqual([true, false]);
+	});
+});
+
+describe("nextOnCourt", () => {
+	const later = (id: string, slot: number, extra: Partial<SnapshotMatch> = {}) => m1({ id, slot, ...extra });
+	test("the earliest unfinished match after it on the same court and day", () => {
+		const s = snapshot([
+			m1({ finished: true }),
+			later("m-c2", 2, { court: 2 }),
+			later("m-next", 3),
+			later("m-after", 4),
+			later("m-done", 2, { finished: true }),
+		]);
+		expect(nextOnCourt(s, "m1")?.id).toBe("m-next");
+	});
+	test("crosses categories, follows time overrides, stays on the same day", () => {
+		const s = snapshot([
+			m1({ finished: true }),
+			later("m-mixed", 1, { category: "mixed", sessionStart: at("15:00:00") }),
+			later("m-moved", 2, { timeOverride: at("16:30:00") }),
+			later("m-sunday", 1, { day: "sunday", sessionStart: new Date("2026-10-18T08:30:00Z") }),
+		]);
+		expect(nextOnCourt(s, "m1")?.id).toBe("m-mixed");
+	});
+	test("nothing after it, or unknown match", () => {
+		expect(nextOnCourt(snapshot([m1({ finished: true })]), "m1")).toBeNull();
+		expect(nextOnCourt(snapshot([m1()]), "nope")).toBeNull();
+	});
+});
+
+describe("nextUpPayload", () => {
+	test("players go to the calendar, referees to the referee screen", () => {
+		const s = snapshot([m1()]);
+		expect(nextUpPayload(s, "m1", "player")).toEqual({
+			title: "You are next! Go to cancha 1",
+			body: "Sat 12:30 · Dani/Mat v Emilio/Ilde",
+			url: "/mens/qualifiers#match-m1",
+			tag: "m1:next",
+		});
+		expect(nextUpPayload(s, "m1", "referee").url).toBe("/referee/m1");
+	});
+});
+
+describe("matchRoles", () => {
+	test("everyone in the match once, player role first", () => {
+		expect([...matchRoles(snapshot([m1()]), "m1")].sort()).toEqual([
+			["p-dani", "player"],
+			["p-emilio", "player"],
+			["p-giando", "referee"],
+			["p-ilde", "player"],
+			["p-marci", "referee"],
+			["p-mat", "player"],
+		]);
 	});
 });

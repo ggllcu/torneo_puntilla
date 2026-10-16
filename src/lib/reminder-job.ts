@@ -8,7 +8,16 @@ import {
 	type SqlDb,
 } from "./push-db";
 import type { SendPush } from "./push-send";
-import { dueReminders, reminderPayload, resendDecision, type Snapshot } from "./reminders";
+import {
+	dueReminders,
+	matchRoles,
+	matchStart,
+	nextOnCourt,
+	nextUpPayload,
+	reminderPayload,
+	resendDecision,
+	type Snapshot,
+} from "./reminders";
 
 export type RunResult = { sent: number; removed: number; failed: number };
 
@@ -60,6 +69,45 @@ export async function runReminders(db: SqlDb, now: Date, send: SendPush): Promis
 				result.failed++;
 			}
 		}
+	}
+	return result;
+}
+
+/**
+ * When a match is completed, tell the players and referees of the next match on that court that they're up.
+ * Sent once per device, player and match (a later score change doesn't resend). Never throws.
+ */
+export async function notifyNextOnCourt(db: SqlDb, completedMatchId: string, now: Date, send: SendPush): Promise<RunResult> {
+	const result: RunResult = { sent: 0, removed: 0, failed: 0 };
+	try {
+		const snapshot = await loadSnapshot(db);
+		const next = nextOnCourt(snapshot, completedMatchId);
+		if (!next) return result;
+		const roles = matchRoles(snapshot, next.id);
+		const subscriptions = await subscriptionsForPlayers(db, [...roles.keys()]);
+		for (const sub of subscriptions) {
+			const role = roles.get(sub.playerId);
+			if (!role) continue;
+			const kind = `next:${role}` as const;
+			try {
+				if (await lastSentStart(db, sub.endpoint, sub.playerId, next.id, kind)) continue;
+				const status = await send(sub, nextUpPayload(snapshot, next.id, role));
+				if (isOk(status)) {
+					await recordSent(db, sub.endpoint, sub.playerId, next.id, kind, matchStart(next), now);
+					result.sent++;
+				} else if (isGone(status)) {
+					await deleteSubscription(db, sub.endpoint);
+					result.removed++;
+				} else {
+					result.failed++;
+				}
+			} catch (error) {
+				console.error(`[next-on-court] sending ${next.id} failed`, error);
+				result.failed++;
+			}
+		}
+	} catch (error) {
+		console.error("[next-on-court] failed", error);
 	}
 	return result;
 }

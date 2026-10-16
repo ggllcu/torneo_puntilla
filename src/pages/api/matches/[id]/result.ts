@@ -2,6 +2,8 @@
 import type { APIRoute } from "astro";
 import { isAdmin } from "../../../../lib/admin-env";
 import { loadMatch, saveResult } from "../../../../lib/data";
+import { db, inBackground, pushSender } from "../../../../lib/push-env";
+import { notifyNextOnCourt } from "../../../../lib/reminder-job";
 import { checkSubmission } from "../../../../lib/scoring";
 import type { SetScore } from "../../../../lib/types";
 
@@ -21,5 +23,9 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
 	if (error) return json({ error }, 400);
 
 	await saveResult(match.id, sets as SetScore[]);
+
+	// "You are next! Go to cancha N" for the following match on this court (sent once; not on later score changes).
+	const send = pushSender();
+	if (send) inBackground(notifyNextOnCourt(db(), match.id, new Date(), send));
 	return json({ ok: true, category: match.category, day: match.day });
 };

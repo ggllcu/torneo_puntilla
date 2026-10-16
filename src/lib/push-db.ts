@@ -156,7 +156,7 @@ export async function lastSentStart(
 	endpoint: string,
 	playerId: string,
 	matchId: string,
-	role: Role,
+	role: Role | `next:${Role}`,
 ): Promise<Date | null> {
 	const [row] = await db.all<{ match_start: string }>(
 		`SELECT match_start FROM push_sent WHERE endpoint = ? AND player_id = ? AND match_id = ? AND role = ?
@@ -174,7 +174,7 @@ export async function recordSent(
 	endpoint: string,
 	playerId: string,
 	matchId: string,
-	role: Role,
+	role: Role | `next:${Role}`,
 	matchStart: Date,
 	now: Date,
 ): Promise<void> {
