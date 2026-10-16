@@ -1,13 +1,15 @@
 ---
 import { EmDashHead, EmDashBodyStart, EmDashBodyEnd } from "emdash/ui";
 import { createPublicPageContext } from "emdash/page";
+import "../styles/global.css";
 
 interface Props {
 	title: string;
+	category?: string;
 }
 
 const SITE_TITLE = "La Puntilla Beach Volley";
-const { title } = Astro.props;
+const { title, category } = Astro.props;
 const fullTitle = title === SITE_TITLE ? title : `${title} — ${SITE_TITLE}`;
 
 const pageCtx = createPublicPageContext({
@@ -25,11 +27,13 @@ const pageCtx = createPublicPageContext({
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#0e7c86" />
 		<title>{fullTitle}</title>
 		<EmDashHead page={pageCtx} />
 	</head>
-	<body>
+	<body data-category={category}>
 		<EmDashBodyStart page={pageCtx} />
+		<slot name="header" />
 		<main id="live">
 			<slot />
 		</main>

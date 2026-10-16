@@ -21,3 +21,15 @@ export function sortMatches(ms: MatchView[], session: Session): MatchView[] {
 	const time = (m: MatchView) => matchTime(session, m.slot, m.timeOverride).getTime();
 	return [...ms].sort((a, b) => time(a) - time(b) || a.court - b.court);
 }
+
+/** Sorted matches → one entry per displayed time, in order. */
+export function groupByTime(sorted: MatchView[], session: Session): { time: string; matches: MatchView[] }[] {
+	const groups: { time: string; matches: MatchView[] }[] = [];
+	for (const m of sorted) {
+		const time = formatTime(matchTime(session, m.slot, m.timeOverride));
+		const last = groups[groups.length - 1];
+		if (last?.time === time) last.matches.push(m);
+		else groups.push({ time, matches: [m] });
+	}
+	return groups;
+}

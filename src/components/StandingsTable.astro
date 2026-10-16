@@ -1,0 +1,100 @@
+---
+import type { StandingRow } from "../lib/standings";
+
+interface Props {
+	title: string;
+	rows: StandingRow[];
+}
+
+const { title, rows } = Astro.props;
+const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
+---
+
+<section class="standings">
+	<h3>{title}</h3>
+	{
+		rows.length === 0 ? (
+			<p class="muted">Teams to be decided.</p>
+		) : (
+			<table>
+				<thead>
+					<tr>
+						<th class="team">Team</th>
+						<th title="Played">P</th>
+						<th title="Won">W</th>
+						<th title="Lost">L</th>
+						<th title="Points for">PF</th>
+						<th title="Points against">PA</th>
+						<th title="Point difference">+/−</th>
+					</tr>
+				</thead>
+				<tbody>
+					{rows.map((r, i) => (
+						<tr>
+							<td class="team">
+								<span class="pos">{i + 1}</span>
+								<span class="seed">{r.team.seed}</span> {r.team.name}
+							</td>
+							<td>{r.played}</td>
+							<td>
+								<strong>{r.won}</strong>
+							</td>
+							<td>{r.lost}</td>
+							<td>{r.pointsFor}</td>
+							<td>{r.pointsAgainst}</td>
+							<td>{signed(r.diff)}</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		)
+	}
+</section>
+
+<style>
+	.standings {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		padding: 12px 14px;
+		overflow-x: auto;
+	}
+	h3 {
+		margin: 0 0 8px;
+		font-size: 15px;
+	}
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 14px;
+		font-variant-numeric: tabular-nums;
+	}
+	th {
+		font-size: 12px;
+		color: var(--muted);
+		font-weight: 600;
+	}
+	th,
+	td {
+		padding: 6px 4px;
+		text-align: center;
+		border-bottom: 1px solid var(--line);
+	}
+	tr:last-child td {
+		border-bottom: 0;
+	}
+	.team {
+		text-align: left;
+		white-space: nowrap;
+	}
+	.pos {
+		display: inline-block;
+		width: 1.4em;
+		color: var(--muted);
+	}
+	.seed {
+		font-size: 12px;
+		font-weight: 700;
+		color: var(--cat);
+	}
+</style>

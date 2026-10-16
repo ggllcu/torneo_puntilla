@@ -1,0 +1,152 @@
+---
+import { formatScore, roundLabel, winnerOf } from "../lib/display";
+import type { MatchView, TeamView } from "../lib/types";
+
+interface Props {
+	match: MatchView;
+}
+
+const { match: m } = Astro.props;
+const finished = m.state === "finished";
+const winner = finished ? winnerOf(m.sets) : null;
+const canReferee = !finished && m.team1 !== null && m.team2 !== null;
+const sides: { team: TeamView | null; label: string; side: 1 | 2 }[] = [
+	{ team: m.team1, label: m.team1Label, side: 1 },
+	{ team: m.team2, label: m.team2Label, side: 2 },
+];
+const setScores = m.sets.length > 1 ? m.sets : [];
+---
+
+<article class="card" id={`match-${m.id}`}>
+	<div class="meta">
+		<span>Court {m.court}</span>
+		<span>{roundLabel(m)}</span>
+		{m.format === "best_of_3" && <span>Best of 3</span>}
+	</div>
+
+	<div class="teams">
+		{
+			sides.map(({ team, label, side }) => (
+				<div class:list={["team", { won: winner === side, lost: winner !== null && winner !== side }]}>
+					{team ? (
+						<>
+							<span class="seed">{team.seed}</span>
+							<span class="name">{team.name}</span>
+						</>
+					) : (
+						<span class="name placeholder">{label}</span>
+					)}
+					{finished && (
+						<span class="points">
+							{m.sets.length > 1
+								? m.sets.filter((s) => (side === 1 ? s.team1 > s.team2 : s.team2 > s.team1)).length
+								: (m.sets[0]?.[side === 1 ? "team1" : "team2"] ?? "")}
+						</span>
+					)}
+				</div>
+			))
+		}
+	</div>
+
+	{setScores.length > 0 && <p class="sets muted">{formatScore(m.sets)}</p>}
+
+	<div class="foot">
+		<span class="ref">
+			Ref:{" "}
+			{m.referee ? (
+				<>
+					<span class="seed">{m.referee.seed}</span> {m.referee.name}
+				</>
+			) : (
+				<span class="placeholder">{m.refereeLabel || "TBD"}</span>
+			)}
+		</span>
+		{canReferee && (
+			<a class="referee" href={`/referee/${m.id}`}>
+				Referee
+			</a>
+		)}
+	</div>
+</article>
+
+<style>
+	.card {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		box-shadow: var(--shadow);
+		padding: 12px 14px;
+	}
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		font-size: 12px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--muted);
+	}
+	.meta span + span::before {
+		content: "·";
+		margin-right: 6px;
+	}
+	.teams {
+		margin: 8px 0;
+		display: grid;
+		gap: 4px;
+	}
+	.team {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+		font-size: 17px;
+	}
+	.team .name {
+		flex: 1;
+		min-width: 0;
+	}
+	.team.won {
+		font-weight: 800;
+		color: var(--win);
+	}
+	.team.lost {
+		color: var(--muted);
+	}
+	.points {
+		font-variant-numeric: tabular-nums;
+		font-size: 20px;
+		font-weight: 800;
+		min-width: 2ch;
+		text-align: right;
+	}
+	.seed {
+		font-size: 12px;
+		font-weight: 700;
+		color: var(--cat);
+		min-width: 2ch;
+	}
+	.sets {
+		margin: 0 0 8px;
+		font-size: 13px;
+	}
+	.foot {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		border-top: 1px dashed var(--line);
+		padding-top: 8px;
+		font-size: 14px;
+		color: var(--muted);
+	}
+	.referee {
+		flex: none;
+		background: var(--accent);
+		color: var(--accent-text);
+		text-decoration: none;
+		font-weight: 700;
+		border-radius: 999px;
+		padding: 8px 16px;
+	}
+</style>

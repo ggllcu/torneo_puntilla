@@ -1,0 +1,118 @@
+---
+import { CATEGORY_LABEL } from "../lib/display";
+import type { Tab } from "../lib/routes";
+import type { Category } from "../lib/types";
+
+interface Props {
+	category: Category;
+	tab: Tab;
+}
+
+const { category, tab } = Astro.props;
+const tabs: { id: Tab; label: string; day: string }[] = [
+	{ id: "qualifiers", label: "Qualifiers", day: "Sat 17 Oct" },
+	{ id: "finals", label: "Finals", day: "Sun 18 Oct" },
+];
+---
+
+<header class="nav">
+	<div class="bar">
+		<a class="brand" href="/">La Puntilla <span>Beach Volley</span></a>
+		<label class="visually-hidden" for="category">Category</label>
+		<select id="category" data-tab={tab}>
+			{
+				(Object.keys(CATEGORY_LABEL) as Category[]).map((c) => (
+					<option value={c} selected={c === category}>
+						{CATEGORY_LABEL[c]}
+					</option>
+				))
+			}
+		</select>
+	</div>
+	<nav class="tabs" aria-label="Phase">
+		{
+			tabs.map((t) => (
+				<a href={`/${category}/${t.id}`} aria-current={t.id === tab ? "page" : undefined}>
+					{t.label} <small>{t.day}</small>
+				</a>
+			))
+		}
+	</nav>
+</header>
+
+<script is:inline>
+	document.getElementById("category").addEventListener("change", (e) => {
+		location.href = `/${e.target.value}/${e.target.dataset.tab}`;
+	});
+</script>
+
+<style>
+	.nav {
+		position: sticky;
+		top: 0;
+		z-index: 10;
+		background: var(--surface);
+		border-bottom: 1px solid var(--line);
+		border-top: 4px solid var(--cat);
+	}
+	.bar,
+	.tabs {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 0 16px;
+		display: flex;
+		align-items: center;
+	}
+	.bar {
+		justify-content: space-between;
+		gap: 12px;
+		padding-top: 10px;
+	}
+	.brand {
+		font-weight: 800;
+		color: var(--text);
+		text-decoration: none;
+		letter-spacing: -0.01em;
+	}
+	.brand span {
+		color: var(--muted);
+		font-weight: 600;
+	}
+	select {
+		font: inherit;
+		font-weight: 700;
+		color: var(--cat);
+		background: var(--bg);
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		padding: 6px 12px;
+	}
+	.tabs {
+		gap: 4px;
+	}
+	.tabs a {
+		flex: 1;
+		text-align: center;
+		padding: 10px 4px;
+		color: var(--muted);
+		text-decoration: none;
+		font-weight: 600;
+		border-bottom: 3px solid transparent;
+	}
+	.tabs a small {
+		display: block;
+		font-weight: 400;
+		font-size: 12px;
+	}
+	.tabs a[aria-current="page"] {
+		color: var(--text);
+		border-bottom-color: var(--cat);
+	}
+	.visually-hidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+	}
+</style>
