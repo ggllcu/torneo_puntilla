@@ -1,0 +1,89 @@
+---
+import CategoryNav from "../../components/CategoryNav.astro";
+import MatchCard from "../../components/MatchCard.astro";
+import StandingsTable from "../../components/StandingsTable.astro";
+import Base from "../../layouts/Base.astro";
+import { loadGroups, loadMatches, loadSession } from "../../lib/data";
+import { CATEGORY_LABEL } from "../../lib/display";
+import { parseCalendarRoute } from "../../lib/routes";
+import { groupByTime, sortMatches } from "../../lib/schedule";
+import { computeStandings } from "../../lib/standings";
+
+const route = parseCalendarRoute(Astro.params.category, Astro.params.tab);
+if (!route) return Astro.rewrite("/404");
+const { category, tab, day } = route;
+
+Astro.response.headers.set("Cache-Control", "no-store");
+
+const [session, matches, groups] = await Promise.all([
+	loadSession(category, day),
+	loadMatches(category, day),
+	tab === "qualifiers" ? loadGroups(category) : Promise.resolve([]),
+]);
+const slots = groupByTime(sortMatches(matches, session), session);
+const dayShort = day === "saturday" ? "Sat" : "Sun";
+---
+
+<Base title={`${CATEGORY_LABEL[category]} ${tab === "qualifiers" ? "Qualifiers" : "Finals"}`} category={category}>
+	<CategoryNav slot="header" category={category} tab={tab} />
+
+	{matches.length === 0 && <p class="muted">No matches scheduled yet.</p>}
+
+	{
+		slots.map(({ time, matches }) => (
+			<section class="slot">
+				<h2>
+					<span class="muted">{dayShort}</span> {time}
+				</h2>
+				<div class="cards">
+					{matches.map((m) => (
+						<MatchCard match={m} />
+					))}
+				</div>
+			</section>
+		))
+	}
+
+	{
+		groups.length > 0 && (
+			<section class="tables">
+				<h2>Standings</h2>
+				{groups.map((g) => (
+					<StandingsTable
+						title={g.name === "Repechage" ? "Repechage" : `Group ${g.name}`}
+						rows={computeStandings(g, matches)}
+					/>
+				))}
+			</section>
+		)
+	}
+</Base>
+
+<script>
+	import "../../scripts/live-refresh";
+</script>
+
+<style>
+	h2 {
+		font-size: 15px;
+		font-weight: 800;
+		margin: 20px 0 8px;
+	}
+	.cards {
+		display: grid;
+		gap: 10px;
+	}
+	@media (min-width: 640px) {
+		.cards {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+	.tables {
+		display: grid;
+		gap: 10px;
+		margin-top: 28px;
+	}
+	.tables h2 {
+		margin-bottom: 0;
+	}
+</style>
