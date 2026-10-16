@@ -173,7 +173,7 @@ tests/*.test.ts                     Vitest
 
 - [ ] **Step 1: Write `tests/scoring.test.ts` (failing).** Cases:
   - `setTarget("single_21",0)===21`, `setTarget("best_of_3",1)===21`, `setTarget("best_of_3",2)===15`
-  - `setWinner({team1:21,team2:19},21)===1`; `{21,20}`→null; `{25,23}`→1; `{20,22}`→null (below target); `{15,13},15`→1
+  - `setWinner({team1:21,team2:19},21)===1`; `{21,20}`→null; `{25,23}`→1; `{17,19}`→null (below target); `{15,13},15`→1
   - deuce: from 20–20, add t1, t2, t1, t1 → finished, winner 1, sets `[{team1:23,team2:21}]`
   - single_21: reaching 21–5 → `finished:true`; `completed` stays empty
   - best_of_3: after 21–15 the state is `completed:[{21,15}]`, `current:{0,0}`, not finished; winning set 2 for team 1 finishes with 2 sets; at 1–1 the third set ends at 15–13
@@ -181,7 +181,7 @@ tests/*.test.ts                     Vitest
   - removePoint floor: `{0,3}` removePoint(1) → `{0,3}`
   - after a match point, removePoint makes `finished:false` again
   - `isValidResult("single_21",[{21,0}])` true; `[{21,20}]` false; `[{24,22}]` true; `[{25,21}]` false (game would have ended earlier); `[]` false; two sets false
-  - `isValidResult("best_of_3",[{21,10},{21,12}])` true; `[{21,10},{10,21},{15,13}]` true; `[{21,10},{21,12},{15,1}]` false; `[{21,10},{10,21},{21,19}]` false (3rd set target is 15)
+  - `isValidResult("best_of_3",[{21,10},{21,12}])` true; `[{21,10},{10,21},{15,13}]` true; `[{21,10},{21,12},{15,1}]` false; `[{21,10},{10,21},{21,10}]` false (3rd set target is 15; `{21,19}` is valid via deuce)
   - `checkSubmission({team1:null,…},[{21,10}])==="Teams not assigned"`; `checkSubmission(teamsSet,"x")==="Invalid score"`; `checkSubmission(teamsSet,[{21,10}])===null`
 
 - [ ] **Step 2: Run `npx vitest run tests/scoring.test.ts`.** Expected: FAIL.
