@@ -1,5 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
+import { isAdmin } from "../../lib/admin-env";
 import { loadMatch, loadSession } from "../../lib/data";
 import { formatScore, roundLabel } from "../../lib/display";
 import { calendarPath } from "../../lib/routes";
@@ -14,7 +15,8 @@ const session = await loadSession(match.category, match.day);
 const time = formatTime(matchTime(session, match.slot, match.timeOverride));
 const backUrl = `${calendarPath(match.category, match.day)}#match-${match.id}`;
 // Finished matches can be re-refereed to change their score ("Change score" on the calendar).
-const ready = match.team1 !== null && match.team2 !== null;
+const admin = isAdmin(Astro.cookies);
+const ready = admin && match.team1 !== null && match.team2 !== null;
 const changing = match.state === "finished";
 const escape = (text: string) =>
 	text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -91,7 +93,7 @@ const info = `${match.day === "saturday" ? "Sat" : "Sun"} ${time} · Court ${mat
 			</div>
 		) : (
 			<div class="closed">
-				<p>The teams for this match are not decided yet.</p>
+				<p>{admin ? "The teams for this match are not decided yet." : "Only the organizers can enter scores."}</p>
 				<a href={backUrl}>Back to the calendar</a>
 			</div>
 		)

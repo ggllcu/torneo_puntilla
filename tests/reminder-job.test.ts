@@ -34,7 +34,7 @@ describe("runReminders", () => {
 		expect(await runReminders(db, at("11:10:00"), send)).toEqual({ sent: 2, removed: 0, failed: 0 });
 		expect(calls.map((c) => [c.endpoint, c.payload.title, c.payload.url])).toEqual([
 			["e-dani", "Your match in 20 min", "/mens/qualifiers#match-m1"],
-			["e-marci", "You're refereeing in 20 min", "/referee/m1"],
+			["e-marci", "You're refereeing in 20 min", "/mens/qualifiers#match-m1"],
 		]);
 		expect(await runReminders(db, at("11:11:00"), send)).toEqual({ sent: 0, removed: 0, failed: 0 });
 	});

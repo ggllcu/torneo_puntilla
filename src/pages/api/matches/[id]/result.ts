@@ -1,5 +1,6 @@
-// Public (no auth) result submission from the referee screen. The last submission wins.
+// Result submission from the referee screen (admins only, see lib/admin.ts). The last submission wins.
 import type { APIRoute } from "astro";
+import { isAdmin } from "../../../../lib/admin-env";
 import { loadMatch, saveResult } from "../../../../lib/data";
 import { checkSubmission } from "../../../../lib/scoring";
 import type { SetScore } from "../../../../lib/types";
@@ -9,7 +10,8 @@ export const prerender = false;
 const json = (body: unknown, status = 200) =>
 	Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
-export const POST: APIRoute = async ({ params, request }) => {
+export const POST: APIRoute = async ({ params, request, cookies }) => {
+	if (!isAdmin(cookies)) return json({ error: "Only the organizers can enter scores" }, 403);
 	const match = await loadMatch(params.id ?? "");
 	if (!match) return json({ error: "Match not found" }, 404);
 

@@ -3,6 +3,7 @@ import CategoryNav from "../../components/CategoryNav.astro";
 import MatchCard from "../../components/MatchCard.astro";
 import StandingsTable from "../../components/StandingsTable.astro";
 import Base from "../../layouts/Base.astro";
+import { isAdmin } from "../../lib/admin-env";
 import { loadGroups, loadMatches, loadSession } from "../../lib/data";
 import { CATEGORY_LABEL } from "../../lib/display";
 import { parseCalendarRoute } from "../../lib/routes";
@@ -21,6 +22,7 @@ const [session, matches, groups] = await Promise.all([
 	tab === "qualifiers" ? loadGroups(category) : Promise.resolve([]),
 ]);
 const slots = groupByTime(sortMatches(matches, session), session);
+const admin = isAdmin(Astro.cookies);
 const dayShort = day === "saturday" ? "Sat" : "Sun";
 ---
 
@@ -37,7 +39,7 @@ const dayShort = day === "saturday" ? "Sat" : "Sun";
 				</h2>
 				<div class="cards">
 					{matches.map((m) => (
-						<MatchCard match={m} />
+						<MatchCard match={m} admin={admin} />
 					))}
 				</div>
 			</section>
