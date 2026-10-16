@@ -22,3 +22,10 @@ export function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
 	const padded = (base64 + "=".repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, "+").replace(/_/g, "/");
 	return Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
 }
+
+/** Matches run late: an unfinished match only counts as past 30 minutes after its scheduled start. */
+const PAST_GRACE_MS = 30 * 60_000;
+
+export function isPastMatch(m: { start: string; finished: boolean }, now: Date): boolean {
+	return m.finished || now.getTime() >= new Date(m.start).getTime() + PAST_GRACE_MS;
+}

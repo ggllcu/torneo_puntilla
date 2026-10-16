@@ -1,6 +1,6 @@
 // Settings page: who am I (stored on the device) and match reminder notifications.
 import { CATEGORY_LABEL } from "../lib/display";
-import { pushSupport, urlBase64ToUint8Array } from "../lib/push-client";
+import { isPastMatch, pushSupport, urlBase64ToUint8Array } from "../lib/push-client";
 import { formatTime } from "../lib/schedule";
 import type { Category } from "../lib/types";
 
@@ -114,8 +114,8 @@ if (root) {
 		}
 		const res = await fetch(`/api/players/${encodeURIComponent(player.id)}/matches?all=1`).catch(() => null);
 		const matches: PlayerMatch[] = res?.ok ? await res.json() : [];
-		const now = Date.now();
-		const isPast = (m: PlayerMatch) => m.finished || new Date(m.start).getTime() <= now;
+		const now = new Date();
+		const isPast = (m: PlayerMatch) => isPastMatch(m, now);
 		const item = (m: PlayerMatch) => {
 			const start = new Date(m.start);
 			const when = `${WEEKDAY.format(start)} ${formatTime(start)} · Court ${m.court} · ${CATEGORY_LABEL[m.category]}`;
