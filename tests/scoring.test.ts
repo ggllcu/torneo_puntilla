@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
 	addPoint,
 	checkSubmission,
+	currentServer,
 	emptyState,
 	isValidResult,
 	matchOutcome,
@@ -20,6 +21,72 @@ const times = (team: 1 | 2, n: number) => Array<1 | 2>(n).fill(team);
 const at = (team1: number, team2: number, completed: ScoreState["completed"] = []): ScoreState => ({
 	completed,
 	current: { team1, team2 },
+});
+
+describe("serving rotation", () => {
+	const start = (startingTeam: 1 | 2 = 1): ScoreState => ({
+		...emptyState(),
+		serving: { startingTeam, firstServers: [1, 0], rallies: [] },
+	});
+
+	test("starts with the chosen team and player, including team two", () => {
+		expect(currentServer(start())).toEqual({ team: 1, player: 1 });
+		expect(currentServer(start(2))).toEqual({ team: 2, player: 0 });
+		expect(currentServer(emptyState())).toBeNull();
+	});
+
+	test("keeps the same player when the serving team scores", () => {
+		const s = play("single_21", [1, 1], start());
+		expect(currentServer(s)).toEqual({ team: 1, player: 1 });
+		expect(s.serving?.rallies).toEqual([1, 1]);
+	});
+
+	test("uses each team's first server initially, then alternates on regaining serve", () => {
+		let s = start();
+		for (const [team, player] of [[2, 0], [1, 0], [2, 1], [1, 1]] as const) {
+			s = addPoint(s, team, "single_21");
+			expect(currentServer(s)).toEqual({ team, player });
+		}
+	});
+
+	test("removing a point recalculates rotation from the corrected rally order", () => {
+		const s = play("single_21", [1, 2, 1, 2], start());
+		const corrected = removePoint(s, 1, "single_21");
+		expect(corrected.current).toEqual({ team1: 1, team2: 2 });
+		expect(currentServer(corrected)).toEqual({ team: 2, player: 0 });
+		expect(corrected.serving?.rallies).toEqual([1, 2, 2]);
+		expect(currentServer(s)).toEqual({ team: 2, player: 1 });
+	});
+
+	test("undoing a side out restores the previous server; removing zero does nothing", () => {
+		const s = addPoint(start(), 2, "single_21");
+		expect(currentServer(removePoint(s, 2, "single_21"))).toEqual({ team: 1, player: 1 });
+		expect(removePoint(s, 1, "single_21")).toEqual(s);
+	});
+
+	test("keeps serving history across set advancement and undoing set point", () => {
+		const s = play("best_of_3", Array<1 | 2>(21).fill(1), start());
+		expect(s.completed).toHaveLength(1);
+		expect(currentServer(s)).toEqual({ team: 1, player: 1 });
+		const corrected = removePoint(s, 1, "best_of_3");
+		expect(corrected.current).toEqual({ team1: 20, team2: 0 });
+		expect(corrected.serving?.rallies).toHaveLength(20);
+	});
+
+	test("reload restores serving choices and rotation along with the score", () => {
+		const s = play("single_21", [2, 1, 2], start());
+		const restored = parseSavedState(JSON.stringify(s))!;
+		expect(restored).toEqual(s);
+		expect(currentServer(restored)).toEqual({ team: 2, player: 1 });
+	});
+
+	test("invalid serving data prompts setup again while preserving a valid score", () => {
+		for (const serving of [null, {}, { startingTeam: 3, firstServers: [0, 1], rallies: [] },
+			{ startingTeam: 1, firstServers: [0, 2], rallies: [] },
+			{ startingTeam: 1, firstServers: [0, 1], rallies: [3] }]) {
+			expect(parseSavedState(JSON.stringify({ ...at(4, 3), serving }))).toEqual(at(4, 3));
+		}
+	});
 });
 
 describe("setTarget", () => {

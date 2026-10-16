@@ -2,7 +2,30 @@
 // Sets go to 21 (15 for the 3rd set of a best of 3), win by 2, no cap.
 import type { Format, MatchView, SetScore } from "./types";
 
-export type ScoreState = { completed: SetScore[]; current: SetScore };
+type Team = 1 | 2;
+export type PlayerIndex = 0 | 1;
+type ServingState = {
+	startingTeam: Team;
+	firstServers: [PlayerIndex, PlayerIndex];
+	/** Rally winners in order, so score corrections can recalculate the rotation. */
+	rallies: Team[];
+};
+export type ScoreState = { completed: SetScore[]; current: SetScore; serving?: ServingState };
+
+export function currentServer(s: ScoreState): { team: Team; player: PlayerIndex } | null {
+	if (!s.serving) return null;
+	let team = s.serving.startingTeam;
+	const players = [...s.serving.firstServers];
+	const served = [team === 1, team === 2];
+	for (const winner of s.serving.rallies) {
+		if (winner === team) continue;
+		team = winner;
+		const index = team - 1;
+		if (served[index]) players[index] = players[index] === 0 ? 1 : 0;
+		served[index] = true;
+	}
+	return { team, player: players[team - 1] };
+}
 
 export const emptyState = (): ScoreState => ({ completed: [], current: { team1: 0, team2: 0 } });
 
@@ -40,14 +63,16 @@ export function matchOutcome(
 function advance(s: ScoreState, format: Format): ScoreState {
 	const setWon = setWinner(s.current, setTarget(format, s.completed.length)) !== null;
 	if (!setWon || matchOutcome(s, format).finished) return s;
-	return { completed: [...s.completed, s.current], current: { team1: 0, team2: 0 } };
+	return { ...s, completed: [...s.completed, s.current], current: { team1: 0, team2: 0 } };
 }
 
 const key = (team: 1 | 2) => (team === 1 ? "team1" : "team2");
 
 export function addPoint(s: ScoreState, team: 1 | 2, format: Format): ScoreState {
 	const current = { ...s.current, [key(team)]: s.current[key(team)] + 1 };
-	return advance({ completed: s.completed, current }, format);
+	const next = { ...s, current };
+	if (s.serving) next.serving = { ...s.serving, rallies: [...s.serving.rallies, team] };
+	return advance(next, format);
 }
 
 export function removePoint(s: ScoreState, team: 1 | 2, format: Format): ScoreState {
@@ -56,8 +81,16 @@ export function removePoint(s: ScoreState, team: 1 | 2, format: Format): ScoreSt
 		current = completed[completed.length - 1];
 		completed = completed.slice(0, -1);
 	}
-	current = { ...current, [key(team)]: Math.max(0, current[key(team)] - 1) };
-	return advance({ completed, current }, format);
+	if (current[key(team)] === 0) return s;
+	current = { ...current, [key(team)]: current[key(team)] - 1 };
+	const next = { ...s, completed, current };
+	if (s.serving) {
+		const rallies = [...s.serving.rallies];
+		const index = rallies.lastIndexOf(team);
+		if (index !== -1) rallies.splice(index, 1);
+		next.serving = { ...s.serving, rallies };
+	}
+	return advance(next, format);
 }
 
 /** Exactly the sets a real match would produce: each set ends on its first winning point, none after the decider. */
@@ -92,13 +125,27 @@ export function checkSubmission(
 const isSet = (v: unknown): v is SetScore =>
 	typeof v === "object" && v !== null && isScore((v as SetScore).team1) && isScore((v as SetScore).team2);
 
+const isTeam = (v: unknown): v is Team => v === 1 || v === 2;
+const isPlayer = (v: unknown): v is PlayerIndex => v === 0 || v === 1;
+const isServing = (v: unknown): v is ServingState => {
+	if (typeof v !== "object" || v === null) return false;
+	const serving = v as ServingState;
+	return isTeam(serving.startingTeam) && Array.isArray(serving.firstServers) &&
+		serving.firstServers.length === 2 && serving.firstServers.every(isPlayer) &&
+		Array.isArray(serving.rallies) && serving.rallies.every(isTeam);
+};
+
 /** The referee screen's saved progress, or null when absent or unusable. */
 export function parseSavedState(raw: string | null): ScoreState | null {
 	if (!raw) return null;
 	try {
 		const v = JSON.parse(raw);
 		if (!Array.isArray(v?.completed) || !v.completed.every(isSet) || !isSet(v.current)) return null;
-		return { completed: v.completed, current: v.current };
+		return {
+			completed: v.completed,
+			current: v.current,
+			...(isServing(v.serving) ? { serving: v.serving } : {}),
+		};
 	} catch {
 		return null;
 	}

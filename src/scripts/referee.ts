@@ -2,11 +2,13 @@
 import { formatScore } from "../lib/display";
 import {
 	addPoint,
+	currentServer,
 	emptyState,
 	matchOutcome,
 	parseSavedState,
 	removePoint,
 	stateFromSets,
+	type PlayerIndex,
 	type ScoreState,
 } from "../lib/scoring";
 import type { Format, SetScore } from "../lib/types";
@@ -41,6 +43,8 @@ if (root) {
 	// Admin-only controls: not rendered for everyone else.
 	const send = document.getElementById("send");
 	const submit = document.getElementById("submit");
+	const setup = el("serving-setup") as HTMLDialogElement;
+	const players = [team1, team2].map((name) => name.split("/").map((player) => player.trim()));
 
 	function render() {
 		const finished = matchOutcome(state, format).finished;
@@ -48,6 +52,12 @@ if (root) {
 		else send?.setAttribute("disabled", "");
 		el("score1").textContent = String(state.current.team1);
 		el("score2").textContent = String(state.current.team2);
+		const serving = finished ? null : currentServer(state);
+		for (const team of [1, 2] as const) {
+			const indicator = el(`serve${team}`);
+			indicator.hidden = serving?.team !== team;
+			indicator.textContent = serving?.team === team ? `Serve: ${players[team - 1][serving.player]}` : "";
+		}
 		if (format === "best_of_3") {
 			const won1 = state.completed.filter((s) => s.team1 > s.team2).length;
 			const won2 = state.completed.length - won1;
@@ -76,6 +86,10 @@ if (root) {
 		const button = (event.target as HTMLElement).closest("button");
 		const team = button?.dataset.team === "1" ? 1 : button?.dataset.team === "2" ? 2 : null;
 		if (!button || !team) return;
+		if (!state.serving) {
+			setup.showModal();
+			return;
+		}
 		update(button.classList.contains("plus") ? addPoint(state, team, format) : removePoint(state, team, format));
 	});
 
@@ -85,6 +99,31 @@ if (root) {
 
 	el("cancel").addEventListener("click", () => {
 		el("modal").hidden = true;
+	});
+
+	// Native modal focus handling keeps the scoring buttons unavailable until all choices are made.
+	setup.addEventListener("cancel", (event) => event.preventDefault());
+	el("serving-form").addEventListener("submit", (event) => {
+		event.preventDefault();
+		const value = (id: string) => (el(id) as unknown as { value: string }).value;
+		const startingTeam = value("starting-team");
+		const first1 = value("first-server1");
+		const first2 = value("first-server2");
+		if ((startingTeam !== "1" && startingTeam !== "2") ||
+			(first1 !== "0" && first1 !== "1") || (first2 !== "0" && first2 !== "1")) return;
+		state = {
+			...state,
+			serving: {
+				startingTeam: Number(startingTeam) as 1 | 2,
+				firstServers: [Number(first1) as PlayerIndex, Number(first2) as PlayerIndex],
+				rallies: [],
+			},
+		};
+		save(state);
+		setup.close();
+		render();
+		el(`serve${startingTeam}`).scrollIntoView({ block: "nearest" });
+		(root!.querySelector(`.plus[data-team="${startingTeam}"]`) as HTMLButtonElement).focus({ preventScroll: true });
 	});
 
 	submit?.addEventListener("click", async () => {
@@ -117,4 +156,8 @@ if (root) {
 	render();
 	// Reopen the pop-up for an in-progress match restored on this device, not for a submitted score being changed.
 	if (restored && matchOutcome(state, format).finished) openModal();
+	else if (!state.serving) {
+		el("serving-resume").hidden = state.completed.length === 0 && state.current.team1 === 0 && state.current.team2 === 0;
+		setup.showModal();
+	}
 }
