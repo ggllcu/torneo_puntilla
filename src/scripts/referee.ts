@@ -1,5 +1,6 @@
 // Referee screen: keeps the score on the device (saved in localStorage) and submits it when the match is over.
 import { formatScore } from "../lib/display";
+import { enterScoringDisplay, isPhone } from "../lib/referee-display";
 import {
 	addPoint,
 	currentServer,
@@ -45,8 +46,61 @@ if (root) {
 	const submit = document.getElementById("submit");
 	const setup = el("serving-setup") as HTMLDialogElement;
 	const players = [team1, team2].map((name) => name.split("/").map((player) => player.trim()));
+	const mobile = isPhone({
+		coarsePointer: matchMedia("(pointer: coarse)").matches,
+		hover: matchMedia("(hover: hover)").matches,
+		width: screen.width,
+		height: screen.height,
+	});
+	const displayButton = el("scoring-display") as HTMLButtonElement;
+	const orientation = screen.orientation as ScreenOrientation & { lock?: (orientation: "landscape") => Promise<void> };
+	let leaving = false;
+
+	function renderDisplay() {
+		displayButton.hidden = !mobile || !state.serving;
+		displayButton.textContent = document.fullscreenElement ? "Exit fullscreen" : "Fullscreen";
+		el("rotate-hint").hidden = !mobile || !state.serving || matchMedia("(orientation: landscape)").matches;
+	}
+
+	function unlockOrientation() {
+		if (!mobile) return;
+		try { orientation?.unlock?.(); } catch { /* Some browsers expose the method but reject it. */ }
+	}
+
+	async function enterDisplay() {
+		displayButton.disabled = true;
+		await enterScoringDisplay({
+			mobile,
+			requestFullscreen: !document.fullscreenElement && document.documentElement.requestFullscreen
+				? () => document.documentElement.requestFullscreen()
+				: undefined,
+			lockLandscape: orientation?.lock ? () => orientation.lock!("landscape") : undefined,
+		});
+		// A pending request must not re-lock the device after the referee leaves.
+		if (leaving) unlockOrientation();
+		displayButton.disabled = false;
+		renderDisplay();
+	}
+
+	displayButton.addEventListener("click", async () => {
+		if (document.fullscreenElement) {
+			unlockOrientation();
+			await document.exitFullscreen().catch(() => {});
+		} else {
+			await enterDisplay();
+		}
+		renderDisplay();
+	});
+	document.addEventListener("fullscreenchange", () => {
+		if (!document.fullscreenElement) unlockOrientation();
+		renderDisplay();
+	});
+	window.addEventListener("resize", renderDisplay);
+	window.addEventListener("pagehide", () => { leaving = true; unlockOrientation(); });
+	window.addEventListener("pageshow", () => { leaving = false; renderDisplay(); });
 
 	function render() {
+		renderDisplay();
 		const finished = matchOutcome(state, format).finished;
 		if (finished) send?.removeAttribute("disabled");
 		else send?.setAttribute("disabled", "");
@@ -122,8 +176,8 @@ if (root) {
 		save(state);
 		setup.close();
 		render();
-		el(`serve${startingTeam}`).scrollIntoView({ block: "nearest" });
 		(root!.querySelector(`.plus[data-team="${startingTeam}"]`) as HTMLButtonElement).focus({ preventScroll: true });
+		void enterDisplay();
 	});
 
 	submit?.addEventListener("click", async () => {
