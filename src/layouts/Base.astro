@@ -1,15 +1,19 @@
 ---
 import { EmDashHead, EmDashBodyStart, EmDashBodyEnd } from "emdash/ui";
 import { createPublicPageContext } from "emdash/page";
+import { isAdmin } from "../lib/admin-env";
 import "../styles/global.css";
 
 interface Props {
 	title: string;
 	category?: string;
+	/** Send visitors who haven't chosen a player to Settings first (admins are never redirected). */
+	requirePlayer?: boolean;
 }
 
 const SITE_TITLE = "La Puntilla Beach Volley";
-const { title, category } = Astro.props;
+const { title, category, requirePlayer = true } = Astro.props;
+const redirectToSettings = requirePlayer && !isAdmin(Astro.cookies);
 const fullTitle = title === SITE_TITLE ? title : `${title} — ${SITE_TITLE}`;
 
 const pageCtx = createPublicPageContext({
@@ -37,6 +41,16 @@ const pageCtx = createPublicPageContext({
 		<script is:inline>
 			if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
 		</script>
+		{
+			redirectToSettings && (
+				<script is:inline>
+					try {
+						if (!localStorage.getItem("puntilla:player"))
+							location.replace("/settings?from=" + encodeURIComponent(location.pathname + location.search + location.hash));
+					} catch {}
+				</script>
+			)
+		}
 		<title>{fullTitle}</title>
 		<EmDashHead page={pageCtx} />
 	</head>

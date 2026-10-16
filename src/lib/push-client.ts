@@ -29,3 +29,11 @@ const PAST_GRACE_MS = 30 * 60_000;
 export function isPastMatch(m: { start: string; finished: boolean }, now: Date): boolean {
 	return m.finished || now.getTime() >= new Date(m.start).getTime() + PAST_GRACE_MS;
 }
+
+/** Which "add to home screen" instructions to show, if any. */
+export function installHint(env: { userAgent: string; standalone: boolean }): "android" | "ios" | null {
+	if (env.standalone) return null;
+	if (/iPhone|iPad|iPod/.test(env.userAgent)) return "ios";
+	if (/Android/.test(env.userAgent)) return "android";
+	return null;
+}

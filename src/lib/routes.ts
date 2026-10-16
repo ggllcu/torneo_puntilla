@@ -25,3 +25,10 @@ const FINALS_DAY_START = Date.parse("2026-10-17T23:00:00Z");
 export function defaultTab(now: Date): Tab {
 	return now.getTime() >= FINALS_DAY_START ? "finals" : "qualifiers";
 }
+
+/** A same-site path to go back to after choosing a player, or null (other sites, Settings itself, junk). */
+export function safeReturnPath(from: string | null): string | null {
+	if (!from || !from.startsWith("/") || from.startsWith("//") || from.includes("\\")) return null;
+	if (from === "/settings" || from.startsWith("/settings?") || from.startsWith("/settings#")) return null;
+	return from;
+}

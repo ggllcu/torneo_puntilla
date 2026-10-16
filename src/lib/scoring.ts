@@ -103,3 +103,9 @@ export function parseSavedState(raw: string | null): ScoreState | null {
 		return null;
 	}
 }
+
+/** A submitted result as referee-screen state, so it can be changed: earlier sets completed, the last one current. */
+export function stateFromSets(sets: SetScore[], _format: Format): ScoreState {
+	if (sets.length === 0) return emptyState();
+	return { completed: sets.slice(0, -1).map((s) => ({ ...s })), current: { ...sets[sets.length - 1] } };
+}

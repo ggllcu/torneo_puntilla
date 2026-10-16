@@ -9,6 +9,7 @@ import {
 	removePoint,
 	setTarget,
 	setWinner,
+	stateFromSets,
 	type ScoreState,
 } from "../src/lib/scoring";
 import type { Format, TeamView } from "../src/lib/types";
@@ -184,5 +185,26 @@ describe("parseSavedState", () => {
 		expect(parseSavedState("{oops")).toBeNull();
 		expect(parseSavedState(JSON.stringify({ current: { team1: 1 } }))).toBeNull();
 		expect(parseSavedState(JSON.stringify({ completed: [], current: { team1: -1, team2: 0 } }))).toBeNull();
+	});
+});
+
+describe("stateFromSets (change a submitted score)", () => {
+	test("single set: the saved set becomes the current one", () => {
+		const s = stateFromSets([{ team1: 21, team2: 18 }], "single_21");
+		expect(s).toEqual(at(21, 18));
+		expect(matchOutcome(s, "single_21")).toMatchObject({ finished: true, winner: 1 });
+	});
+	test("best of 3: earlier sets completed, last set current", () => {
+		const sets = [
+			{ team1: 21, team2: 15 },
+			{ team1: 15, team2: 21 },
+			{ team1: 15, team2: 13 },
+		];
+		const s = stateFromSets(sets, "best_of_3");
+		expect(s).toEqual(at(15, 13, sets.slice(0, 2)));
+		expect(matchOutcome(s, "best_of_3").sets).toEqual(sets);
+	});
+	test("no saved sets: a fresh state", () => {
+		expect(stateFromSets([], "single_21")).toEqual(emptyState());
 	});
 });

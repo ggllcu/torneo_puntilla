@@ -1,13 +1,16 @@
 ---
 import Base from "../layouts/Base.astro";
+import { isAdmin } from "../lib/admin-env";
 import { vapidPublicKey } from "../lib/push-env";
 
 Astro.response.headers.set("Cache-Control", "no-store");
+const admin = isAdmin(Astro.cookies);
 ---
 
-<Base title="Settings">
+<Base title="Settings" requirePlayer={false}>
 	<a class="back" href="/">← Home</a>
 	<h1>Settings</h1>
+	<p id="welcome" class="welcome" hidden>Choose your name to get started.</p>
 
 	<div id="settings" data-vapid={vapidPublicKey()}>
 		<section class="panel">
@@ -17,8 +20,18 @@ Astro.response.headers.set("Cache-Control", "no-store");
 				<span id="chosen-name"></span>
 				<button id="clear" class="link" type="button">Clear</button>
 			</p>
+			<a id="continue" class="continue" href="/" hidden>Continue →</a>
 			<input id="search" type="search" placeholder="Search your name" autocomplete="off" />
 			<div id="players" class="players" role="listbox" aria-label="Players"></div>
+		</section>
+
+		<section id="install" class="panel" hidden>
+			<h2>Install the app</h2>
+			<p class="muted">
+				Add La Puntilla to your home screen to open it like an app: in Chrome tap <strong>⋮</strong> (top right), then{" "}
+				<strong>Install app</strong> or <strong>Add to Home screen</strong>.
+			</p>
+			<button id="install-button" class="toggle" type="button" hidden>Install</button>
 		</section>
 
 		<section class="panel">
@@ -34,11 +47,33 @@ Astro.response.headers.set("Cache-Control", "no-store");
 			<h2>Your matches</h2>
 			<ul id="matches" class="matches"><li class="muted">Choose your name to see your matches.</li></ul>
 		</section>
+
+		<section class="panel">
+			<h2>Admin</h2>
+			{
+				admin ? (
+					<>
+						<p class="muted">You're an admin: you can referee matches and change scores.</p>
+						<button id="admin-logout" class="link" type="button">Sign out</button>
+					</>
+				) : (
+					<>
+						<button id="admin-open" class="toggle" type="button">Become admin</button>
+						<form id="admin-form" class="admin-form" hidden>
+							<input id="admin-password" type="password" placeholder="Password" autocomplete="current-password" />
+							<button class="toggle" type="submit">Sign in</button>
+							<p id="admin-error" class="error" aria-live="polite" />
+						</form>
+					</>
+				)
+			}
+		</section>
 	</div>
 </Base>
 
 <script>
 	import "../scripts/settings";
+	import "../scripts/admin-settings";
 </script>
 
 <style>
@@ -62,6 +97,31 @@ Astro.response.headers.set("Cache-Control", "no-store");
 	}
 	.panel p {
 		margin: 4px 0 10px;
+	}
+	.welcome {
+		margin: 0 0 12px;
+		padding: 12px 14px;
+		border-radius: var(--radius);
+		background: var(--accent);
+		color: var(--accent-text);
+		font-weight: 700;
+	}
+	.continue {
+		display: block;
+		margin: 0 0 10px;
+		padding: 12px;
+		border-radius: 999px;
+		background: var(--accent);
+		color: var(--accent-text);
+		text-align: center;
+		font-weight: 800;
+		text-decoration: none;
+	}
+	.welcome[hidden],
+	.continue[hidden],
+	.admin-form[hidden],
+	.chosen[hidden] {
+		display: none;
 	}
 	.chosen {
 		display: flex;
@@ -126,6 +186,15 @@ Astro.response.headers.set("Cache-Control", "no-store");
 		color: var(--accent);
 		font-weight: 600;
 		cursor: pointer;
+	}
+	.admin-form {
+		display: grid;
+		gap: 8px;
+	}
+	.error {
+		color: #c0392b;
+		font-weight: 600;
+		margin: 0;
 	}
 	.matches {
 		list-style: none;

@@ -4,12 +4,14 @@ import type { MatchView, TeamView } from "../lib/types";
 
 interface Props {
 	match: MatchView;
+	/** Referee / Change score buttons are for admins only. */
+	admin: boolean;
 }
 
-const { match: m } = Astro.props;
+const { match: m, admin } = Astro.props;
 const finished = m.state === "finished";
 const winner = finished ? winnerOf(m.sets) : null;
-const canReferee = !finished && m.team1 !== null && m.team2 !== null;
+const canReferee = admin && m.team1 !== null && m.team2 !== null;
 const sides: { team: TeamView | null; label: string; side: 1 | 2 }[] = [
 	{ team: m.team1, label: m.team1Label, side: 1 },
 	{ team: m.team2, label: m.team2Label, side: 2 },
@@ -63,8 +65,8 @@ const setScores = m.sets.length > 1 ? m.sets : [];
 			)}
 		</span>
 		{canReferee && (
-			<a class="referee" href={`/referee/${m.id}`}>
-				Referee
+			<a class:list={["referee", { change: finished }]} href={`/referee/${m.id}`}>
+				{finished ? "Change score" : "Referee"}
 			</a>
 		)}
 	</div>
@@ -156,6 +158,11 @@ const setScores = m.sets.length > 1 ? m.sets : [];
 		padding-top: 8px;
 		font-size: 14px;
 		color: var(--muted);
+	}
+	.referee.change {
+		background: transparent;
+		color: var(--accent);
+		border: 1px solid var(--accent);
 	}
 	.referee {
 		flex: none;

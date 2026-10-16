@@ -134,7 +134,7 @@ describe("reminderPayload", () => {
 	test("referee reminder sent late, minutes rounded down, minimum 1", () => {
 		expect(reminderPayload(s, reminder("p-marci", "referee"), at("11:25:30"), false)).toMatchObject({
 			title: "You're refereeing in 4 min",
-			url: "/referee/m1",
+			url: "/mens/qualifiers#match-m1",
 			tag: "m1:referee",
 		});
 		expect(reminderPayload(s, reminder("p-marci", "referee"), at("11:29:50"), false).title).toBe(

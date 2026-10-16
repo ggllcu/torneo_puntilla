@@ -88,7 +88,8 @@ export function reminderPayload(s: Snapshot, r: Reminder, now: Date, rescheduled
 	return {
 		title,
 		body: `${day} ${formatTime(r.start)} · Court ${m.court} · ${matchLabel(s, m)}`,
-		url: r.role === "player" ? `${calendarPath(m.category, m.day)}#match-${m.id}` : `/referee/${m.id}`,
+		// The referee screen is admin-only, so both roles open the match on the calendar.
+		url: `${calendarPath(m.category, m.day)}#match-${m.id}`,
 		tag: `${m.id}:${r.role}`,
 	};
 }
