@@ -1,0 +1,148 @@
+---
+import Base from "../layouts/Base.astro";
+import { vapidPublicKey } from "../lib/push-env";
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Base title="Settings">
+	<a class="back" href="/">← Home</a>
+	<h1>Settings</h1>
+
+	<div id="settings" data-vapid={vapidPublicKey()}>
+		<section class="panel">
+			<h2>Who are you?</h2>
+			<p class="muted">Pick your name to get reminders for your matches.</p>
+			<p id="chosen" class="chosen" hidden>
+				<span id="chosen-name"></span>
+				<button id="clear" class="link" type="button">Clear</button>
+			</p>
+			<input id="search" type="search" placeholder="Search your name" autocomplete="off" />
+			<div id="players" class="players" role="listbox" aria-label="Players"></div>
+		</section>
+
+		<section class="panel">
+			<h2>Notifications</h2>
+			<p id="push-note" class="muted">Choose your name first.</p>
+			<div id="push-controls" hidden>
+				<button id="toggle" class="toggle" type="button" aria-pressed="false">Notifications off</button>
+				<button id="test" class="link" type="button" hidden>Send me a test notification</button>
+				<p id="push-status" class="muted" aria-live="polite"></p>
+			</div>
+		</section>
+
+		<section class="panel">
+			<h2>Your matches</h2>
+			<ul id="matches" class="matches"><li class="muted">Choose your name to see your matches.</li></ul>
+		</section>
+	</div>
+</Base>
+
+<script>
+	import "../scripts/settings";
+</script>
+
+<style>
+	.back {
+		font-weight: 600;
+		text-decoration: none;
+	}
+	h1 {
+		margin: 8px 0 12px;
+	}
+	.panel {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		padding: 14px;
+		margin-bottom: 12px;
+	}
+	h2 {
+		margin: 0 0 4px;
+		font-size: 17px;
+	}
+	.panel p {
+		margin: 4px 0 10px;
+	}
+	.chosen {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		font-weight: 700;
+	}
+	input {
+		width: 100%;
+		font: inherit;
+		padding: 10px 12px;
+		border: 1px solid var(--line);
+		border-radius: 10px;
+		background: var(--bg);
+		color: var(--text);
+	}
+	.players {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+		gap: 6px;
+		margin-top: 10px;
+		max-height: 260px;
+		overflow-y: auto;
+	}
+	.players :global(button) {
+		font: inherit;
+		text-align: left;
+		padding: 8px 10px;
+		border-radius: 10px;
+		border: 1px solid var(--line);
+		background: var(--bg);
+		color: var(--text);
+		cursor: pointer;
+	}
+	.players :global(button[aria-selected="true"]) {
+		border-color: var(--accent);
+		background: var(--accent);
+		color: var(--accent-text);
+		font-weight: 700;
+	}
+	.toggle {
+		font: inherit;
+		font-weight: 700;
+		width: 100%;
+		padding: 12px;
+		border-radius: 999px;
+		border: 1px solid var(--line);
+		background: var(--bg);
+		color: var(--text);
+		cursor: pointer;
+	}
+	.toggle[aria-pressed="true"] {
+		background: var(--accent);
+		border-color: var(--accent);
+		color: var(--accent-text);
+	}
+	.link {
+		font: inherit;
+		background: none;
+		border: 0;
+		padding: 8px 0;
+		color: var(--accent);
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.matches {
+		list-style: none;
+		margin: 6px 0 0;
+		padding: 0;
+		display: grid;
+		gap: 8px;
+	}
+	.matches :global(li) {
+		font-size: 15px;
+	}
+	.matches :global(.role) {
+		font-size: 12px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--accent);
+	}
+</style>
