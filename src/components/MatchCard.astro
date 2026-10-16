@@ -4,7 +4,10 @@ import type { MatchView, TeamView } from "../lib/types";
 
 interface Props {
 	match: MatchView;
-	/** Everyone can referee an open match; "Change score" on a finished one is for admins. */
+	/**
+	 * Admins see every Referee / Change score button. Everyone else gets the Referee button hidden; the calendar
+	 * script reveals it only for matches where the chosen player is on the referee team.
+	 */
 	admin: boolean;
 }
 
@@ -65,7 +68,12 @@ const setScores = m.sets.length > 1 ? m.sets : [];
 			)}
 		</span>
 		{canReferee && (
-			<a class:list={["referee", { change: finished }]} href={`/referee/${m.id}`}>
+			<a
+				class:list={["referee", { change: finished }]}
+				href={`/referee/${m.id}`}
+				hidden={!admin}
+				data-referee-button
+			>
 				{finished ? "Change score" : "Referee"}
 			</a>
 		)}
