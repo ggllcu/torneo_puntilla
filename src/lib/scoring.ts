@@ -88,3 +88,18 @@ export function checkSubmission(
 	if (!wellFormed || !isValidResult(match.format, sets as SetScore[])) return "Invalid score";
 	return null;
 }
+
+const isSet = (v: unknown): v is SetScore =>
+	typeof v === "object" && v !== null && isScore((v as SetScore).team1) && isScore((v as SetScore).team2);
+
+/** The referee screen's saved progress, or null when absent or unusable. */
+export function parseSavedState(raw: string | null): ScoreState | null {
+	if (!raw) return null;
+	try {
+		const v = JSON.parse(raw);
+		if (!Array.isArray(v?.completed) || !v.completed.every(isSet) || !isSet(v.current)) return null;
+		return { completed: v.completed, current: v.current };
+	} catch {
+		return null;
+	}
+}

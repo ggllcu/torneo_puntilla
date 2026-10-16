@@ -5,6 +5,7 @@ import {
 	emptyState,
 	isValidResult,
 	matchOutcome,
+	parseSavedState,
 	removePoint,
 	setTarget,
 	setWinner,
@@ -170,5 +171,18 @@ describe("checkSubmission", () => {
 
 	test("accepts a valid result", () => {
 		expect(checkSubmission(ready, [{ team1: 21, team2: 10 }])).toBeNull();
+	});
+});
+
+describe("parseSavedState", () => {
+	test("restores a saved state", () => {
+		const s = at(7, 5, [{ team1: 21, team2: 15 }]);
+		expect(parseSavedState(JSON.stringify(s))).toEqual(s);
+	});
+	test("rejects missing, corrupt or malformed data", () => {
+		expect(parseSavedState(null)).toBeNull();
+		expect(parseSavedState("{oops")).toBeNull();
+		expect(parseSavedState(JSON.stringify({ current: { team1: 1 } }))).toBeNull();
+		expect(parseSavedState(JSON.stringify({ completed: [], current: { team1: -1, team2: 0 } }))).toBeNull();
 	});
 });
