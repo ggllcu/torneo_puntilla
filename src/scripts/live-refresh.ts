@@ -9,7 +9,10 @@ async function refresh() {
 		const doc = new DOMParser().parseFromString(await res.text(), "text/html");
 		const next = doc.getElementById("live");
 		const current = document.getElementById("live");
-		if (next && current && next.innerHTML !== current.innerHTML) current.innerHTML = next.innerHTML;
+		if (next && current && next.innerHTML !== current.innerHTML) {
+			current.innerHTML = next.innerHTML;
+			document.dispatchEvent(new CustomEvent("live:updated"));
+		}
 	} catch {
 		// offline or a transient error: try again next tick
 	}

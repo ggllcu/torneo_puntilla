@@ -111,9 +111,6 @@ emdash's (`ec_*`, `_emdash_*`).
 - `POST /api/push/subscribe` `{ subscription, playerId }` → upsert by endpoint. 400 on malformed
   subscription or unknown player.
 - `POST /api/push/unsubscribe` `{ endpoint }` → delete (idempotent).
-- `POST /api/push/test` `{ endpoint }` → sends "Test notification · La Puntilla" to that subscription
-  only (404 if unknown). Backs a **"Send me a test notification"** button on the settings screen, used
-  by players to check their setup and for production end-to-end testing without touching real matches.
 - VAPID public key exposed to the page (e.g. `PUBLIC_VAPID_KEY` at build time or an endpoint).
 
 ### 5.3 Reminder job (every minute, in the Worker's `scheduled` handler)
@@ -143,9 +140,9 @@ emdash's (`ec_*`, `_emdash_*`).
   text and target URL, the send/skip/rescheduled decision (none, same start, start moved ≤ 5 min,
   start moved > 5 min, different player on the same device).
 - Reminder job tested against a local D1 (Miniflare) seeded with the tournament seed.
-- Manual end-to-end on a real Android phone and a real iPhone (installed) against production via the
-  "Send me a test notification" button. The 20-minute timing is covered by the unit tests and the
-  local D1 job test, not by moving real matches.
+- Manual end-to-end on a real Android phone and a real iPhone (installed) against production. (A
+  "Send me a test notification" button existed and was removed at the user's request.) The 20-minute
+  timing is covered by the unit tests and the local D1 job test.
 
 ## 7. Left to the builder
 

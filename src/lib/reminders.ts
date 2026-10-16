@@ -32,6 +32,7 @@ export type PlayerMatch = {
 	category: Category;
 	court: 1 | 2;
 	label: string;
+	finished: boolean;
 };
 
 export const REMINDER_LEAD_MINUTES = 20;
@@ -92,14 +93,22 @@ export function reminderPayload(s: Snapshot, r: Reminder, now: Date, rescheduled
 	};
 }
 
-export function playerMatches(s: Snapshot, playerId: string, now: Date): PlayerMatch[] {
+/** A player's matches with their role: upcoming only, or every match with `includePast`. */
+export function playerMatches(
+	s: Snapshot,
+	playerId: string,
+	now: Date,
+	options: { includePast?: boolean } = {},
+): PlayerMatch[] {
 	return s.matches
-		.filter((m) => !m.finished)
+		.filter((m) => options.includePast || !m.finished)
 		.flatMap((m) => {
 			const role = rolesIn(s, m).get(playerId);
 			const start = matchStart(m);
-			if (!role || start <= now) return [];
-			return [{ matchId: m.id, role, start, category: m.category, court: m.court, label: matchLabel(s, m) }];
+			if (!role || (!options.includePast && start <= now)) return [];
+			return [
+				{ matchId: m.id, role, start, category: m.category, court: m.court, label: matchLabel(s, m), finished: m.finished },
+			];
 		})
 		.sort((a, b) => a.start.getTime() - b.start.getTime());
 }

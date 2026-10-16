@@ -26,7 +26,6 @@ Astro.response.headers.set("Cache-Control", "no-store");
 			<p id="push-note" class="muted">Choose your name first.</p>
 			<div id="push-controls" hidden>
 				<button id="toggle" class="toggle" type="button" aria-pressed="false">Notifications off</button>
-				<button id="test" class="link" type="button" hidden>Send me a test notification</button>
 				<p id="push-status" class="muted" aria-live="polite"></p>
 			</div>
 		</section>
@@ -137,6 +136,27 @@ Astro.response.headers.set("Cache-Control", "no-store");
 	}
 	.matches :global(li) {
 		font-size: 15px;
+	}
+	.matches :global(li.past) {
+		opacity: 0.45;
+		filter: grayscale(1);
+	}
+	.matches :global(li.divider) {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 4px 0;
+		font-size: 12px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--muted);
+	}
+	.matches :global(li.divider)::before,
+	.matches :global(li.divider)::after {
+		content: "";
+		flex: 1;
+		border-top: 1px solid var(--line);
 	}
 	.matches :global(.role) {
 		font-size: 12px;

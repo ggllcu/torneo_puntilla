@@ -19,7 +19,9 @@ const tabs: { id: Tab; label: string; day: string }[] = [
 <header class="nav">
 	<div class="bar">
 		<a class="brand" href="/">La Puntilla <span>Beach Volley</span></a>
-		<div class="actions">
+		<SettingsLink />
+	</div>
+	<div class="picker">
 		<label class="visually-hidden" for="category">Category</label>
 		<select id="category" data-tab={tab}>
 			{
@@ -30,8 +32,6 @@ const tabs: { id: Tab; label: string; day: string }[] = [
 				))
 			}
 		</select>
-		<SettingsLink />
-		</div>
 	</div>
 	<nav class="tabs" aria-label="Phase">
 		{
@@ -60,6 +60,7 @@ const tabs: { id: Tab; label: string; day: string }[] = [
 		border-top: 4px solid var(--cat);
 	}
 	.bar,
+	.picker,
 	.tabs {
 		max-width: 720px;
 		margin: 0 auto;
@@ -72,12 +73,6 @@ const tabs: { id: Tab; label: string; day: string }[] = [
 		gap: 12px;
 		padding-top: 10px;
 	}
-	.actions {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-		min-width: 0;
-	}
 	.brand {
 		font-weight: 800;
 		color: var(--text);
@@ -88,7 +83,11 @@ const tabs: { id: Tab; label: string; day: string }[] = [
 		color: var(--muted);
 		font-weight: 600;
 	}
+	.picker {
+		padding-top: 8px;
+	}
 	select {
+		width: 100%;
 		font: inherit;
 		font-weight: 700;
 		color: var(--cat);

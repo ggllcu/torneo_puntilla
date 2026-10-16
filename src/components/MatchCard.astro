@@ -18,6 +18,7 @@ const setScores = m.sets.length > 1 ? m.sets : [];
 ---
 
 <article class="card" id={`match-${m.id}`}>
+	<p class="mine-badge" data-mine-badge></p>
 	<div class="meta">
 		<span>Court {m.court}</span>
 		<span>{roundLabel(m)}</span>
@@ -76,6 +77,22 @@ const setScores = m.sets.length > 1 ? m.sets : [];
 		border-radius: var(--radius);
 		box-shadow: var(--shadow);
 		padding: 12px 14px;
+	}
+	.card[data-mine] {
+		border: 2px solid var(--cat);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--cat) 18%, transparent), var(--shadow);
+	}
+	.mine-badge {
+		display: none;
+		margin: 0 0 6px;
+		font-size: 12px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--cat);
+	}
+	.card[data-mine] .mine-badge {
+		display: block;
 	}
 	.meta {
 		display: flex;

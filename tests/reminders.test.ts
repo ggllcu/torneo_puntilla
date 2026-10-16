@@ -163,13 +163,25 @@ describe("playerMatches", () => {
 	test("upcoming matches with role and label", () => {
 		const s = snapshot([m1(), m1({ id: "m2", slot: 3, team1Id: "tB3", team2Id: "tA2", refereeId: "tA1" }), m1({ id: "m0", finished: true })]);
 		expect(playerMatches(s, "p-marci", at("11:00:00"))).toEqual([
-			{ matchId: "m1", role: "referee", start: at("11:30:00"), category: "mens", court: 1, label: "Dani/Mat v Emilio/Ilde" },
-			{ matchId: "m2", role: "player", start: at("12:10:00"), category: "mens", court: 1, label: "Marci/Giando v Emilio/Ilde" },
+			{ matchId: "m1", role: "referee", start: at("11:30:00"), category: "mens", court: 1, label: "Dani/Mat v Emilio/Ilde", finished: false },
+			{ matchId: "m2", role: "player", start: at("12:10:00"), category: "mens", court: 1, label: "Marci/Giando v Emilio/Ilde", finished: false },
 		]);
 	});
 	test("past matches and unknown players give nothing", () => {
 		const s = snapshot([m1()]);
 		expect(playerMatches(s, "p-marci", at("11:30:00"))).toEqual([]);
 		expect(playerMatches(s, "p-nobody", at("11:00:00"))).toEqual([]);
+	});
+});
+
+describe("playerMatches with includePast (calendar highlighting)", () => {
+	test("includes finished and already-started matches", () => {
+		const s = snapshot([m1({ finished: true }), m1({ id: "m2", slot: 3 })]);
+		expect(playerMatches(s, "p-dani", at("12:00:00"), { includePast: true }).map((m) => [m.matchId, m.role])).toEqual([
+			["m1", "player"],
+			["m2", "player"],
+		]);
+		expect(playerMatches(s, "p-dani", at("12:00:00")).map((m) => m.matchId)).toEqual(["m2"]);
+		expect(playerMatches(s, "p-dani", at("12:00:00"), { includePast: true }).map((m) => m.finished)).toEqual([true, false]);
 	});
 });

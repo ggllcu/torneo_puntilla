@@ -1,11 +1,19 @@
 // Settings page: who am I (stored on the device) and match reminder notifications.
 import { CATEGORY_LABEL } from "../lib/display";
-import { pushSupport, urlBase64ToUint8Array } from "../lib/push-client";
+import { isPastMatch, pushSupport, urlBase64ToUint8Array } from "../lib/push-client";
 import { formatTime } from "../lib/schedule";
 import type { Category } from "../lib/types";
 
 type Player = { id: string; name: string };
-type PlayerMatch = { matchId: string; role: "player" | "referee"; start: string; category: Category; court: number; label: string };
+type PlayerMatch = {
+	matchId: string;
+	role: "player" | "referee";
+	start: string;
+	category: Category;
+	court: number;
+	label: string;
+	finished: boolean;
+};
 
 const PLAYER_KEY = "puntilla:player";
 const PUSH_KEY = "puntilla:push";
@@ -95,7 +103,6 @@ if (root) {
 		controls.hidden = !(support === "supported" && vapid && player);
 		el("toggle").setAttribute("aria-pressed", String(pushOn));
 		el("toggle").textContent = pushOn ? "Notifications on" : "Notifications off";
-		el("test").hidden = !pushOn;
 		el("push-status").textContent = status;
 	}
 
@@ -105,18 +112,27 @@ if (root) {
 			list.innerHTML = `<li class="muted">Choose your name to see your matches.</li>`;
 			return;
 		}
-		const res = await fetch(`/api/players/${encodeURIComponent(player.id)}/matches`).catch(() => null);
+		const res = await fetch(`/api/players/${encodeURIComponent(player.id)}/matches?all=1`).catch(() => null);
 		const matches: PlayerMatch[] = res?.ok ? await res.json() : [];
-		list.innerHTML = matches.length
-			? matches
-					.map((m) => {
-						const start = new Date(m.start);
-						const when = `${WEEKDAY.format(start)} ${formatTime(start)} · Court ${m.court} · ${CATEGORY_LABEL[m.category]}`;
-						const role = m.role === "player" ? "Playing" : "Refereeing";
-						return `<li><span class="role">${role}</span><br>${escape(when)}<br>${escape(m.label)}</li>`;
-					})
-					.join("")
-			: `<li class="muted">No upcoming matches.</li>`;
+		const now = new Date();
+		const isPast = (m: PlayerMatch) => isPastMatch(m, now);
+		const item = (m: PlayerMatch) => {
+			const start = new Date(m.start);
+			const when = `${WEEKDAY.format(start)} ${formatTime(start)} · Court ${m.court} · ${CATEGORY_LABEL[m.category]}`;
+			const role = m.role === "player" ? "Playing" : "Refereeing";
+			return `<li class="${isPast(m) ? "past" : ""}"><span class="role">${role}</span><br>${escape(when)}<br>${escape(m.label)}</li>`;
+		};
+		const past = matches.filter(isPast);
+		const next = matches.filter((m) => !isPast(m));
+		if (matches.length === 0) {
+			list.innerHTML = `<li class="muted">No matches.</li>`;
+			return;
+		}
+		list.innerHTML = [
+			...past.map(item),
+			past.length ? `<li class="divider" role="separator"><span>Next games</span></li>` : "",
+			...(next.length ? next.map(item) : [`<li class="muted">No upcoming matches.</li>`]),
+		].join("");
 	}
 
 	async function subscribe() {
@@ -188,14 +204,6 @@ if (root) {
 		} finally {
 			el("toggle").removeAttribute("disabled");
 		}
-	});
-
-	el("test").addEventListener("click", async () => {
-		const subscription = await currentSubscription();
-		if (!subscription) return renderPush("This device isn't registered any more: turn notifications off and on.");
-		const res = await post("/api/push/test", { endpoint: subscription.endpoint });
-		const body = (await res.json().catch(() => ({}))) as { error?: string };
-		renderPush(res.ok ? "Test notification sent." : (body.error ?? "Could not send the test notification."));
 	});
 
 	(async () => {
