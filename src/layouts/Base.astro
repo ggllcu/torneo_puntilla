@@ -9,10 +9,12 @@ interface Props {
 	category?: string;
 	/** On a device's first visit, send visitors without a chosen player to Settings (admins are never redirected). */
 	requirePlayer?: boolean;
+	/** A task screen that uses the viewport instead of the reading layout. */
+	fullHeight?: boolean;
 }
 
 const SITE_TITLE = "La Puntilla Beach Volley";
-const { title, category, requirePlayer = true } = Astro.props;
+const { title, category, requirePlayer = true, fullHeight = false } = Astro.props;
 const redirectToSettings = requirePlayer && !isAdmin(Astro.cookies);
 const fullTitle = title === SITE_TITLE ? title : `${title} — ${SITE_TITLE}`;
 
@@ -30,7 +32,7 @@ const pageCtx = createPublicPageContext({
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="viewport" content={`width=device-width, initial-scale=1.0${fullHeight ? ", viewport-fit=cover" : ""}`} />
 		<meta name="theme-color" content="#082858" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<link rel="icon" href="/icons/favicon-32.png" type="image/png" />
@@ -57,19 +59,31 @@ const pageCtx = createPublicPageContext({
 		<title>{fullTitle}</title>
 		<EmDashHead page={pageCtx} />
 	</head>
-	<body data-category={category}>
+	<body data-category={category} data-full-height={fullHeight || undefined}>
 		<EmDashBodyStart page={pageCtx} />
 		<slot name="header" />
 		<main id="live">
 			<slot />
 		</main>
-		<footer class="site-footer">
+		{!fullHeight && <footer class="site-footer">
 			Made with <span class="heart" aria-label="love">♥</span> by{" "}
 			<a href="https://www.instagram.com/il_gu__/" target="_blank" rel="noopener noreferrer">LG</a>
-		</footer>
+		</footer>}
 		<EmDashBodyEnd page={pageCtx} />
 		<script>
 			import "../scripts/push-sync";
 		</script>
 	</body>
 </html>
+
+<style>
+	:global(body[data-full-height]) {
+		height: 100vh;
+		height: 100dvh;
+	}
+	:global(body[data-full-height] main) {
+		height: 100%;
+		max-width: none;
+		padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+	}
+</style>
