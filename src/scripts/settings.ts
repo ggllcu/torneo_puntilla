@@ -152,10 +152,20 @@ if (root) {
 		if (!next && pushOn) await unsubscribe();
 		player = next;
 		store.set(PLAYER_KEY, next);
-		if (next && pushOn) await subscribe().catch((e) => renderPush(e instanceof Error ? e.message : String(e)));
+		let status = "";
+		if (next && pushOn) {
+			try {
+				await subscribe();
+			} catch {
+				// The server still has this device under the previous player: turn notifications off
+				// rather than keep sending someone else's reminders.
+				await unsubscribe().catch(() => null);
+				status = `Could not switch notifications to ${next.name}. Turn them on again to retry.`;
+			}
+		}
 		renderPlayers((el("search") as unknown as { value: string }).value);
 		renderChosen();
-		renderPush();
+		renderPush(status);
 		await renderMatches();
 	}
 
