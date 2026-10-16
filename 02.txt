@@ -1,0 +1,10 @@
+🔢 *SISTEMA DE PUNTUACIÓN / SCORING SYSTEM* 🔢
+
+• 🏐 *Partidos de Fase de Grupos y Eliminatorias / Group Stage & Playoff Matches:* Todos los encuentros (excepto las finales por el 1º y 2º puesto) se decidirán a un *set único de 21 puntos*. Para ganar, es necesario tener una ventaja mínima de 2 puntos.
+_All matches (except the 1st and 2nd place finals) will be decided in a single set of 21 points. A minimum 2-point lead is required to win._
+
+• 🏆 *Finales (1º y 2º puesto) / Finals (1st & 2nd place):* Se disputarán *al mejor de 3 sets*. El equipo que gane al menos 2 sets se proclamará campeón.
+_The finals will be played as the best of 3 sets. The team that wins at least 2 sets will be declared the winner._
+
+• ⏱️ *Puntuación de las Finales / Scoring in the Finals:* Los dos primeros sets se jugarán a *21 puntos* (con ventaja mínima de 2). En caso de empate, el tercer set de desempate se jugará a *15 puntos* (con ventaja mínima de 2).
+_The first two sets will be played to 21 points (with a minimum 2-point lead). In case of a tie, the potential third deciding set will be played to 15 points (with a minimum 2-point lead)._
