@@ -6,9 +6,10 @@ import {
 	matchOutcome,
 	parseSavedState,
 	removePoint,
+	stateFromSets,
 	type ScoreState,
 } from "../lib/scoring";
-import type { Format } from "../lib/types";
+import type { Format, SetScore } from "../lib/types";
 
 const root = document.getElementById("referee");
 
@@ -18,13 +19,6 @@ if (root) {
 	const storageKey = `ref:${id}`;
 	const el = (elementId: string) => document.getElementById(elementId)!;
 
-	const load = (): ScoreState => {
-		try {
-			return parseSavedState(localStorage.getItem(storageKey)) ?? emptyState();
-		} catch {
-			return emptyState();
-		}
-	};
 	const save = (s: ScoreState) => {
 		try {
 			localStorage.setItem(storageKey, JSON.stringify(s));
@@ -33,9 +27,21 @@ if (root) {
 		}
 	};
 
-	let state = load();
+	// Changing a finished match starts from its submitted score, unless a change is already in progress here.
+	const savedSets = root.dataset.savedSets ? (JSON.parse(root.dataset.savedSets) as SetScore[]) : null;
+	const restored = (() => {
+		try {
+			return parseSavedState(localStorage.getItem(storageKey));
+		} catch {
+			return null;
+		}
+	})();
+	let state = restored ?? (savedSets ? stateFromSets(savedSets, format) : emptyState());
 
 	function render() {
+		const finished = matchOutcome(state, format).finished;
+		if (finished) el("send").removeAttribute("disabled");
+		else el("send").setAttribute("disabled", "");
 		el("score1").textContent = String(state.current.team1);
 		el("score2").textContent = String(state.current.team2);
 		if (format === "best_of_3") {
@@ -67,6 +73,10 @@ if (root) {
 		const team = button?.dataset.team === "1" ? 1 : button?.dataset.team === "2" ? 2 : null;
 		if (!button || !team) return;
 		update(button.classList.contains("plus") ? addPoint(state, team, format) : removePoint(state, team, format));
+	});
+
+	el("send").addEventListener("click", () => {
+		if (matchOutcome(state, format).finished) openModal();
 	});
 
 	el("cancel").addEventListener("click", () => {
@@ -102,5 +112,6 @@ if (root) {
 	});
 
 	render();
-	if (matchOutcome(state, format).finished) openModal();
+	// Reopen the pop-up for an in-progress match restored on this device, not for a submitted score being changed.
+	if (restored && matchOutcome(state, format).finished) openModal();
 }

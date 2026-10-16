@@ -1,7 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import { loadMatch, loadSession } from "../../lib/data";
-import { roundLabel } from "../../lib/display";
+import { formatScore, roundLabel } from "../../lib/display";
 import { calendarPath } from "../../lib/routes";
 import { formatTime, matchTime } from "../../lib/schedule";
 
@@ -13,7 +13,9 @@ if (!match) return Astro.rewrite("/404");
 const session = await loadSession(match.category, match.day);
 const time = formatTime(matchTime(session, match.slot, match.timeOverride));
 const backUrl = `${calendarPath(match.category, match.day)}#match-${match.id}`;
-const ready = match.state !== "finished" && match.team1 !== null && match.team2 !== null;
+// Finished matches can be re-refereed to change their score ("Change score" on the calendar).
+const ready = match.team1 !== null && match.team2 !== null;
+const changing = match.state === "finished";
 const escape = (text: string) =>
 	text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const info = `${match.day === "saturday" ? "Sat" : "Sun"} ${time} · Court ${match.court} · ${roundLabel(match)}`;
@@ -32,7 +34,14 @@ const info = `${match.day === "saturday" ? "Sat" : "Sun"} ${time} · Court ${mat
 				data-team1={match.team1!.name}
 				data-team2={match.team2!.name}
 				data-back={backUrl}
+				data-saved-sets={changing ? JSON.stringify(match.sets) : undefined}
 			>
+				{changing && (
+					<p class="changing">
+						Changing the submitted score{match.sets.length ? `: ${formatScore(match.sets)}` : ""}. Adjust it and
+						send it again.
+					</p>
+				)}
 				<p id="set-info" class="set-info" hidden />
 				<div class="names">
 					{[match.team1!, match.team2!].map((t) => (
@@ -63,6 +72,10 @@ const info = `${match.day === "saturday" ? "Sat" : "Sun"} ${time} · Court ${mat
 					</button>
 				</div>
 
+				<button id="send" class="send" type="button" disabled>
+					Send score
+				</button>
+
 				<div id="modal" class="overlay" hidden>
 					<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
 						<h2 id="modal-title">Submit Score</h2>
@@ -78,11 +91,7 @@ const info = `${match.day === "saturday" ? "Sat" : "Sun"} ${time} · Court ${mat
 			</div>
 		) : (
 			<div class="closed">
-				<p>
-					{match.state === "finished"
-						? "This match is already finished."
-						: "The teams for this match are not decided yet."}
-				</p>
+				<p>The teams for this match are not decided yet.</p>
 				<a href={backUrl}>Back to the calendar</a>
 			</div>
 		)
@@ -175,6 +184,29 @@ const info = `${match.day === "saturday" ? "Sat" : "Sun"} ${time} · Court ${mat
 	}
 	.dash {
 		color: var(--muted);
+	}
+	.changing {
+		margin: 8px 0 0;
+		padding: 10px 12px;
+		border-radius: 10px;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		font-size: 14px;
+	}
+	.send {
+		display: block;
+		width: 100%;
+		margin-top: 20px;
+		padding: 16px;
+		font-weight: 800;
+		font-size: 18px;
+		background: var(--accent);
+		color: var(--accent-text);
+	}
+	.send:disabled {
+		background: var(--line);
+		color: var(--muted);
+		cursor: not-allowed;
 	}
 	.overlay {
 		position: fixed;
