@@ -6,6 +6,11 @@
 	"main": "./src/worker.ts",
 	"compatibility_date": "2026-02-24",
 	"compatibility_flags": ["nodejs_compat"],
+	// Web Push (VAPID). The private key is the secret VAPID_PRIVATE_JWK (wrangler secret put).
+	"vars": {
+		"VAPID_PUBLIC_KEY": "BGP302QjLhKWThI_h6agiZX_BwT7CCCGPtwXpEqBtBdKo0w9wYY22jCS03yvf4bNPqQBUs_SJrYairx5oHg6vsQ",
+		"VAPID_SUBJECT": "mailto:87c21@live.it",
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",
