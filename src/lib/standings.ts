@@ -73,3 +73,9 @@ export function computeStandings(group: GroupView, matches: MatchView[]): Standi
 			a.team.seed.localeCompare(b.team.seed),
 	);
 }
+
+/** Groups by name, Repechage last. */
+export function orderGroups(groups: GroupView[]): GroupView[] {
+	const last = (g: GroupView) => (g.name === "Repechage" ? 1 : 0);
+	return [...groups].sort((a, b) => last(a) - last(b) || a.name.localeCompare(b.name));
+}
