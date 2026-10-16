@@ -1,4 +1,5 @@
 ---
+import SettingsLink from "../components/SettingsLink.astro";
 import Base from "../layouts/Base.astro";
 import { CATEGORY_LABEL } from "../lib/display";
 import { defaultTab } from "../lib/routes";
@@ -16,6 +17,7 @@ const categories: { id: Category; saturday: string; sunday: string }[] = [
 ---
 
 <Base title="La Puntilla Beach Volley">
+	<div class="top"><SettingsLink /></div>
 	<header class="hero">
 		<p class="eyebrow">Playa de La Puntilla · 17–18 Oct</p>
 		<h1>Beach Volley Tournament</h1>
@@ -37,8 +39,12 @@ const categories: { id: Category; saturday: string; sunday: string }[] = [
 </Base>
 
 <style>
+	.top {
+		display: flex;
+		justify-content: flex-end;
+	}
 	.hero {
-		padding: 28px 0 8px;
+		padding: 4px 0 8px;
 	}
 	.eyebrow {
 		margin: 0;
