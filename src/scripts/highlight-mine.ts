@@ -1,4 +1,5 @@
-// Calendar: highlight the matches of the player chosen in Settings (as player or referee).
+// Calendar: highlight the matches of the player chosen in Settings (as player or referee),
+// and show the Referee button on the matches they referee.
 type Mine = { matchId: string; role: "player" | "referee" };
 
 let mine: Map<string, Mine["role"]> | null = null;
@@ -19,6 +20,8 @@ function apply() {
 		card.dataset.mine = role;
 		const badge = card.querySelector("[data-mine-badge]");
 		if (badge) badge.textContent = role === "player" ? "You're playing" : "You're refereeing";
+		// Only the referee team's players get the Referee button (admins already see all of them).
+		if (role === "referee") card.querySelector("[data-referee-button]")?.removeAttribute("hidden");
 	}
 }
 
