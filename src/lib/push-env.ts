@@ -1,5 +1,5 @@
 // Worker bindings for the push API routes (only importable inside the Worker).
-import { env } from "cloudflare:workers";
+import { env, waitUntil } from "cloudflare:workers";
 import { d1, type SqlDb } from "./push-db";
 import { webPushSender, type SendPush } from "./push-send";
 
@@ -15,3 +15,6 @@ export function pushSender(): SendPush | null {
 }
 
 export const vapidPublicKey = (): string => vars().VAPID_PUBLIC_KEY ?? "";
+
+/** Keep work running after the response has been sent. */
+export const inBackground = (work: Promise<unknown>): void => waitUntil(work);
