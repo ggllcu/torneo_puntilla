@@ -1,0 +1,240 @@
+---
+import Base from "../../layouts/Base.astro";
+import { loadMatch, loadSession } from "../../lib/data";
+import { roundLabel } from "../../lib/display";
+import { calendarPath } from "../../lib/routes";
+import { formatTime, matchTime } from "../../lib/schedule";
+
+Astro.response.headers.set("Cache-Control", "no-store");
+
+const match = await loadMatch(Astro.params.id ?? "");
+if (!match) return Astro.rewrite("/404");
+
+const session = await loadSession(match.category, match.day);
+const time = formatTime(matchTime(session, match.slot, match.timeOverride));
+const backUrl = `${calendarPath(match.category, match.day)}#match-${match.id}`;
+const ready = match.state !== "finished" && match.team1 !== null && match.team2 !== null;
+const escape = (text: string) =>
+	text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const info = `${match.day === "saturday" ? "Sat" : "Sun"} ${time} · Court ${match.court} · ${roundLabel(match)}`;
+---
+
+<Base title={`Referee · ${roundLabel(match)}`} category={match.category}>
+	<a class="back" href={backUrl}>← Calendar</a>
+	<p class="info">{info}</p>
+
+	{
+		ready ? (
+			<div
+				id="referee"
+				data-id={match.id}
+				data-format={match.format}
+				data-team1={match.team1!.name}
+				data-team2={match.team2!.name}
+				data-back={backUrl}
+			>
+				<p id="set-info" class="set-info" hidden />
+				<div class="names">
+					{[match.team1!, match.team2!].map((t) => (
+						<p class="team">
+							<span class="seed">{t.seed}</span>
+							<span set:html={t.name.split("/").map(escape).join("/<wbr>")} />
+						</p>
+					))}
+				</div>
+				<div class="board">
+					<button class="plus" data-team="1" aria-label={`Point to ${match.team1!.name}`}>
+						+
+					</button>
+					<p class="score" aria-live="polite">
+						<span id="score1">0</span>
+						<span class="dash">-</span>
+						<span id="score2">0</span>
+					</p>
+					<button class="plus" data-team="2" aria-label={`Point to ${match.team2!.name}`}>
+						+
+					</button>
+					<button class="minus" data-team="1" aria-label={`Remove a point from ${match.team1!.name}`}>
+						−
+					</button>
+					<span />
+					<button class="minus" data-team="2" aria-label={`Remove a point from ${match.team2!.name}`}>
+						−
+					</button>
+				</div>
+
+				<div id="modal" class="overlay" hidden>
+					<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+						<h2 id="modal-title">Submit Score</h2>
+						<p id="modal-winner" class="winner" />
+						<p id="modal-score" class="final" />
+						<p id="modal-error" class="error" hidden />
+						<div class="actions">
+							<button id="cancel" class="secondary">Cancel</button>
+							<button id="submit" class="primary">Submit</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		) : (
+			<div class="closed">
+				<p>
+					{match.state === "finished"
+						? "This match is already finished."
+						: "The teams for this match are not decided yet."}
+				</p>
+				<a href={backUrl}>Back to the calendar</a>
+			</div>
+		)
+	}
+</Base>
+
+<script>
+	import "../../scripts/referee";
+</script>
+
+<style>
+	.back {
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.info {
+		margin: 8px 0 4px;
+		font-size: 13px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--muted);
+	}
+	.set-info {
+		text-align: center;
+		font-weight: 700;
+		margin: 8px 0 0;
+	}
+	.names {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+		margin-top: 12px;
+		align-items: end;
+	}
+	.team {
+		margin: 0;
+		text-align: center;
+		font-weight: 700;
+		font-size: 18px;
+	}
+	.seed {
+		display: block;
+		color: var(--cat);
+		font-size: 13px;
+	}
+	.board {
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
+		align-items: center;
+		gap: 10px;
+		margin-top: 10px;
+	}
+	button {
+		font: inherit;
+		border: 0;
+		border-radius: var(--radius);
+		cursor: pointer;
+		touch-action: manipulation;
+		-webkit-tap-highlight-color: transparent;
+	}
+	.plus {
+		height: min(42vh, 320px);
+		background: var(--cat);
+		color: #fff;
+		font-size: 64px;
+		font-weight: 300;
+	}
+	.plus:active,
+	.minus:active {
+		transform: scale(0.97);
+	}
+	.minus {
+		height: 56px;
+		background: var(--surface);
+		color: var(--text);
+		border: 1px solid var(--line);
+		font-size: 28px;
+	}
+	.score {
+		margin: 0;
+		display: flex;
+		align-items: baseline;
+		gap: 4px;
+		font-size: clamp(34px, 11vw, 64px);
+		font-weight: 800;
+		font-variant-numeric: tabular-nums;
+		line-height: 1;
+		white-space: nowrap;
+	}
+	.dash {
+		color: var(--muted);
+	}
+	.overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 20;
+		display: grid;
+		place-items: center;
+		padding: 16px;
+		background: rgb(0 0 0 / 0.5);
+	}
+	.overlay[hidden] {
+		display: none;
+	}
+	.modal {
+		width: 100%;
+		max-width: 360px;
+		background: var(--surface);
+		border-radius: var(--radius);
+		padding: 20px;
+		text-align: center;
+	}
+	.modal h2 {
+		margin: 0 0 12px;
+	}
+	.winner {
+		margin: 0;
+		color: var(--muted);
+	}
+	.final {
+		margin: 6px 0 16px;
+		font-size: 32px;
+		font-weight: 800;
+	}
+	.error {
+		color: #c0392b;
+		font-weight: 600;
+	}
+	.actions {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+	}
+	.actions button {
+		padding: 14px;
+		font-weight: 700;
+	}
+	.primary {
+		background: var(--accent);
+		color: var(--accent-text);
+	}
+	.secondary {
+		background: var(--bg);
+		color: var(--text);
+		border: 1px solid var(--line);
+	}
+	.closed {
+		margin-top: 24px;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		padding: 20px;
+	}
+</style>
