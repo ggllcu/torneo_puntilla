@@ -48,8 +48,8 @@ const playersOf = (s: Snapshot, teamId: string | null) => (teamId ? (s.teams.get
 /** Each player in a match once, with their role; the player role wins over referee. */
 function rolesIn(s: Snapshot, m: SnapshotMatch): Map<string, Role> {
 	const roles = new Map<string, Role>();
-	for (const id of playersOf(s, m.refereeId)) roles.set(id, "referee");
 	for (const id of [...playersOf(s, m.team1Id), ...playersOf(s, m.team2Id)]) roles.set(id, "player");
+	for (const id of playersOf(s, m.refereeId)) if (!roles.has(id)) roles.set(id, "referee");
 	return roles;
 }
 
