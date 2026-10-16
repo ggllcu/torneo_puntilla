@@ -46,6 +46,10 @@ const pageCtx = createPublicPageContext({
 		<main id="live">
 			<slot />
 		</main>
+		<footer class="site-footer">
+			Made with <span class="heart" aria-label="love">♥</span> by{" "}
+			<a href="https://www.instagram.com/il_gu__/" target="_blank" rel="noopener noreferrer">LG</a>
+		</footer>
 		<EmDashBodyEnd page={pageCtx} />
 		<script>
 			import "../scripts/push-sync";
