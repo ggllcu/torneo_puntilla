@@ -5,7 +5,15 @@ import { formatTime } from "../lib/schedule";
 import type { Category } from "../lib/types";
 
 type Player = { id: string; name: string };
-type PlayerMatch = { matchId: string; role: "player" | "referee"; start: string; category: Category; court: number; label: string };
+type PlayerMatch = {
+	matchId: string;
+	role: "player" | "referee";
+	start: string;
+	category: Category;
+	court: number;
+	label: string;
+	finished: boolean;
+};
 
 const PLAYER_KEY = "puntilla:player";
 const PUSH_KEY = "puntilla:push";
@@ -104,18 +112,27 @@ if (root) {
 			list.innerHTML = `<li class="muted">Choose your name to see your matches.</li>`;
 			return;
 		}
-		const res = await fetch(`/api/players/${encodeURIComponent(player.id)}/matches`).catch(() => null);
+		const res = await fetch(`/api/players/${encodeURIComponent(player.id)}/matches?all=1`).catch(() => null);
 		const matches: PlayerMatch[] = res?.ok ? await res.json() : [];
-		list.innerHTML = matches.length
-			? matches
-					.map((m) => {
-						const start = new Date(m.start);
-						const when = `${WEEKDAY.format(start)} ${formatTime(start)} · Court ${m.court} · ${CATEGORY_LABEL[m.category]}`;
-						const role = m.role === "player" ? "Playing" : "Refereeing";
-						return `<li><span class="role">${role}</span><br>${escape(when)}<br>${escape(m.label)}</li>`;
-					})
-					.join("")
-			: `<li class="muted">No upcoming matches.</li>`;
+		const now = Date.now();
+		const isPast = (m: PlayerMatch) => m.finished || new Date(m.start).getTime() <= now;
+		const item = (m: PlayerMatch) => {
+			const start = new Date(m.start);
+			const when = `${WEEKDAY.format(start)} ${formatTime(start)} · Court ${m.court} · ${CATEGORY_LABEL[m.category]}`;
+			const role = m.role === "player" ? "Playing" : "Refereeing";
+			return `<li class="${isPast(m) ? "past" : ""}"><span class="role">${role}</span><br>${escape(when)}<br>${escape(m.label)}</li>`;
+		};
+		const past = matches.filter(isPast);
+		const next = matches.filter((m) => !isPast(m));
+		if (matches.length === 0) {
+			list.innerHTML = `<li class="muted">No matches.</li>`;
+			return;
+		}
+		list.innerHTML = [
+			...past.map(item),
+			past.length ? `<li class="divider" role="separator"><span>Next games</span></li>` : "",
+			...(next.length ? next.map(item) : [`<li class="muted">No upcoming matches.</li>`]),
+		].join("");
 	}
 
 	async function subscribe() {

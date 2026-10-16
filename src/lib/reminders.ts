@@ -32,6 +32,7 @@ export type PlayerMatch = {
 	category: Category;
 	court: 1 | 2;
 	label: string;
+	finished: boolean;
 };
 
 export const REMINDER_LEAD_MINUTES = 20;
@@ -105,7 +106,9 @@ export function playerMatches(
 			const role = rolesIn(s, m).get(playerId);
 			const start = matchStart(m);
 			if (!role || (!options.includePast && start <= now)) return [];
-			return [{ matchId: m.id, role, start, category: m.category, court: m.court, label: matchLabel(s, m) }];
+			return [
+				{ matchId: m.id, role, start, category: m.category, court: m.court, label: matchLabel(s, m), finished: m.finished },
+			];
 		})
 		.sort((a, b) => a.start.getTime() - b.start.getTime());
 }
