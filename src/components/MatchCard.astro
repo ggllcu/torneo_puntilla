@@ -4,14 +4,14 @@ import type { MatchView, TeamView } from "../lib/types";
 
 interface Props {
 	match: MatchView;
-	/** Referee / Change score buttons are for admins only. */
+	/** Everyone can referee an open match; "Change score" on a finished one is for admins. */
 	admin: boolean;
 }
 
 const { match: m, admin } = Astro.props;
 const finished = m.state === "finished";
 const winner = finished ? winnerOf(m.sets) : null;
-const canReferee = admin && m.team1 !== null && m.team2 !== null;
+const canReferee = m.team1 !== null && m.team2 !== null && (!finished || admin);
 const sides: { team: TeamView | null; label: string; side: 1 | 2 }[] = [
 	{ team: m.team1, label: m.team1Label, side: 1 },
 	{ team: m.team2, label: m.team2Label, side: 2 },

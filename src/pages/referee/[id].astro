@@ -15,8 +15,10 @@ const session = await loadSession(match.category, match.day);
 const time = formatTime(matchTime(session, match.slot, match.timeOverride));
 const backUrl = `${calendarPath(match.category, match.day)}#match-${match.id}`;
 // Finished matches can be re-refereed to change their score ("Change score" on the calendar).
+// Everyone can keep score; only admins can send it (and change a finished match's score).
 const admin = isAdmin(Astro.cookies);
-const ready = admin && match.team1 !== null && match.team2 !== null;
+const teamsSet = match.team1 !== null && match.team2 !== null;
+const ready = teamsSet && (match.state !== "finished" || admin);
 const changing = match.state === "finished";
 const escape = (text: string) =>
 	text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -36,6 +38,7 @@ const info = `${match.day === "saturday" ? "Sat" : "Sun"} ${time} · Court ${mat
 				data-team1={match.team1!.name}
 				data-team2={match.team2!.name}
 				data-back={backUrl}
+				data-admin={admin ? "true" : undefined}
 				data-saved-sets={changing ? JSON.stringify(match.sets) : undefined}
 			>
 				{changing && (
@@ -74,26 +77,36 @@ const info = `${match.day === "saturday" ? "Sat" : "Sun"} ${time} · Court ${mat
 					</button>
 				</div>
 
-				<button id="send" class="send" type="button" disabled>
-					Send score
-				</button>
+				{
+					admin && (
+						<button id="send" class="send" type="button" disabled>
+							Send score
+						</button>
+					)
+				}
 
 				<div id="modal" class="overlay" hidden>
 					<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-						<h2 id="modal-title">Submit Score</h2>
+						<h2 id="modal-title">{admin ? "Submit Score" : "The game is finished"}</h2>
 						<p id="modal-winner" class="winner" />
 						<p id="modal-score" class="final" />
 						<p id="modal-error" class="error" hidden />
-						<div class="actions">
-							<button id="cancel" class="secondary">Cancel</button>
-							<button id="submit" class="primary">Submit</button>
-						</div>
+						{admin ? (
+							<div class="actions">
+								<button id="cancel" class="secondary">Cancel</button>
+								<button id="submit" class="primary">Submit</button>
+							</div>
+						) : (
+							<div class="actions single">
+								<button id="cancel" class="primary">OK</button>
+							</div>
+						)}
 					</div>
 				</div>
 			</div>
 		) : (
 			<div class="closed">
-				<p>{admin ? "The teams for this match are not decided yet." : "Only the organizers can enter scores."}</p>
+				<p>{teamsSet ? "This match is already finished." : "The teams for this match are not decided yet."}</p>
 				<a href={backUrl}>Back to the calendar</a>
 			</div>
 		)
@@ -254,6 +267,9 @@ const info = `${match.day === "saturday" ? "Sat" : "Sun"} ${time} · Court ${mat
 	.actions button {
 		padding: 14px;
 		font-weight: 700;
+	}
+	.actions.single {
+		grid-template-columns: 1fr;
 	}
 	.primary {
 		background: var(--accent);

@@ -38,10 +38,14 @@ if (root) {
 	})();
 	let state = restored ?? (savedSets ? stateFromSets(savedSets, format) : emptyState());
 
+	// Admin-only controls: not rendered for everyone else.
+	const send = document.getElementById("send");
+	const submit = document.getElementById("submit");
+
 	function render() {
 		const finished = matchOutcome(state, format).finished;
-		if (finished) el("send").removeAttribute("disabled");
-		else el("send").setAttribute("disabled", "");
+		if (finished) send?.removeAttribute("disabled");
+		else send?.setAttribute("disabled", "");
 		el("score1").textContent = String(state.current.team1);
 		el("score2").textContent = String(state.current.team2);
 		if (format === "best_of_3") {
@@ -75,7 +79,7 @@ if (root) {
 		update(button.classList.contains("plus") ? addPoint(state, team, format) : removePoint(state, team, format));
 	});
 
-	el("send").addEventListener("click", () => {
+	send?.addEventListener("click", () => {
 		if (matchOutcome(state, format).finished) openModal();
 	});
 
@@ -83,8 +87,7 @@ if (root) {
 		el("modal").hidden = true;
 	});
 
-	el("submit").addEventListener("click", async () => {
-		const submit = el("submit");
+	submit?.addEventListener("click", async () => {
 		const error = el("modal-error");
 		submit.setAttribute("disabled", "");
 		error.hidden = true;
