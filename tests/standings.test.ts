@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { computeStandings } from "../src/lib/standings";
+import { computeStandings, orderGroups } from "../src/lib/standings";
 import { group, match, played, team } from "./fixtures";
 
 const [A1, A2, A3] = [team("A1"), team("A2"), team("A3")];
@@ -44,5 +44,14 @@ describe("computeStandings", () => {
 			match({ team1: A1, team2: A2, state: "finished", sets: [{ team1: 21, team2: 18 }, { team1: 19, team2: 21 }, { team1: 15, team2: 12 }] }),
 		]);
 		expect(rows[0]).toMatchObject({ team: A1, won: 1, pointsFor: 55, pointsAgainst: 51 });
+	});
+});
+
+describe("orderGroups", () => {
+	test("by name, Repechage last", () => {
+		const names = orderGroups([group("Repechage", []), group("B", []), group("A", []), group("C", [])]).map(
+			(g) => g.name,
+		);
+		expect(names).toEqual(["A", "B", "C", "Repechage"]);
 	});
 });
