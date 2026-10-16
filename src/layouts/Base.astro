@@ -47,5 +47,8 @@ const pageCtx = createPublicPageContext({
 			<slot />
 		</main>
 		<EmDashBodyEnd page={pageCtx} />
+		<script>
+			import "../scripts/push-sync";
+		</script>
 	</body>
 </html>

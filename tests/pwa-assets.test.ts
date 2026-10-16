@@ -35,3 +35,8 @@ test("service worker handles push and notificationclick", () => {
 	expect(sw).toContain('addEventListener("push"');
 	expect(sw).toContain('addEventListener("notificationclick"');
 });
+
+test("a notification replacing one with the same tag still alerts (review finding 1)", () => {
+	const sw = readFileSync("public/sw.js", "utf8");
+	expect(sw).toMatch(/renotify:\s*Boolean\(data\.tag\)/);
+});
