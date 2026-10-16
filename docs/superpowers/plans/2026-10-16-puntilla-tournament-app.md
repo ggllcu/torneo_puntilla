@@ -108,7 +108,7 @@ tests/*.test.ts                     Vitest
     expect(c.teams).toHaveLength(33);
     expect(c.groups).toHaveLength(3 + 1 + 4 + 4);          // womens A-C + Repechage, mens A-D, mixed A-D
     expect(c.sessions).toHaveLength(6);
-    expect(c.matches).toHaveLength(80);                      // 45 group + 3 repechage + 8 playoff + 24 sunday
+    expect(c.matches).toHaveLength(68);                      // 33 group + 3 repechage + 8 playoff + 24 sunday
   });
   test("shared players are one record", () => {
     const t = (id: string) => c.teams.find(x => x.id === id)!.data;
@@ -141,7 +141,7 @@ tests/*.test.ts                     Vitest
 
 - [ ] **Step 5: Run `npm test`.** Expected: PASS. Then run `npm run seed:build` and check that `seed/seed.json` exists and that `package.json#emdash.seed` points to it.
 
-- [ ] **Step 6: Boot locally.** Run `npx astro dev` and open `/_emdash/admin`. Finish the setup wizard with **include content** ticked. In dev, `/_emdash/api/setup/dev-bypass?redirect=/_emdash/admin` is allowed if the wizard is awkward; if bypass skips content, re-run setup on a wiped `.wrangler/state`. Expected: the admin lists Players (48), Teams (33) and Matches (80), and match "Men's Sat 12:30 · C1 · A1 v A2" shows Team 1 = Dani/Mat. **If the wizard does not apply our content, stop and report.** The fallback is a one-off import via the emdash content CLI/REST with an API token, which needs a plan change.
+- [ ] **Step 6: Boot locally.** Run `npx astro dev` and open `/_emdash/admin`. Finish the setup wizard with **include content** ticked. In dev, `/_emdash/api/setup/dev-bypass?redirect=/_emdash/admin` is allowed if the wizard is awkward; if bypass skips content, re-run setup on a wiped `.wrangler/state`. Expected: the admin lists Players (48), Teams (33) and Matches (68), and match "Men's Sat 12:30 · C1 · A1 v A2" shows Team 1 = Dani/Mat. **If the wizard does not apply our content, stop and report.** The fallback is a one-off import via the emdash content CLI/REST with an API token, which needs a plan change.
 
 - [ ] **Step 7: Commit.** `git add -A && git commit -m "feat: scaffold emdash site and tournament seed"`
 
@@ -294,7 +294,7 @@ Page content (functional; styling is minimal, clean and mobile-first):
   - `/` redirects to `/mens/qualifiers`.
   - `/womens/qualifiers` shows 12 matches (9 group + 3 repechage); the 10:20 slot shows C1 v C3 on Court 1 and "3rd Group A v 3rd Group B" on Court 2.
   - `/mixed/finals` shows 8 matches with QF1 at 09:30 and the Final at 10:30.
-  - `/mens/qualifiers` shows 22 matches (18 group + 4 playoff), 12:30–14:50, and 4 standings tables.
+  - `/mens/qualifiers` shows 16 matches (12 group + 4 playoff), 12:30–14:50, and 4 standings tables.
   - `/foo/bar` → 404.
   - Submit a score with curl (Task 4) and confirm the open page shows it within ~20 s without a reload, and the standings update.
 - [ ] **Step 3: Commit.** `feat: calendar with standings and live refresh`

@@ -1,0 +1,38 @@
+---
+import { EmDashHead, EmDashBodyStart, EmDashBodyEnd } from "emdash/ui";
+import { createPublicPageContext } from "emdash/page";
+
+interface Props {
+	title: string;
+}
+
+const SITE_TITLE = "La Puntilla Beach Volley";
+const { title } = Astro.props;
+const fullTitle = title === SITE_TITLE ? title : `${title} — ${SITE_TITLE}`;
+
+const pageCtx = createPublicPageContext({
+	Astro,
+	kind: "custom",
+	pageType: "website",
+	title: fullTitle,
+	pageTitle: title,
+	siteName: SITE_TITLE,
+});
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{fullTitle}</title>
+		<EmDashHead page={pageCtx} />
+	</head>
+	<body>
+		<EmDashBodyStart page={pageCtx} />
+		<main id="live">
+			<slot />
+		</main>
+		<EmDashBodyEnd page={pageCtx} />
+	</body>
+</html>
