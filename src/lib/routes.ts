@@ -17,3 +17,11 @@ export function parseCalendarRoute(
 export function calendarPath(category: Category, day: Day): string {
 	return `/${category}/${day === "saturday" ? "qualifiers" : "finals"}`;
 }
+
+/** Sunday 18 Oct 2026, 00:00 in Atlantic/Canary (UTC+1). */
+const FINALS_DAY_START = Date.parse("2026-10-17T23:00:00Z");
+
+/** The tab worth opening right now: Qualifiers until Saturday ends, Finals from Sunday. */
+export function defaultTab(now: Date): Tab {
+	return now.getTime() >= FINALS_DAY_START ? "finals" : "qualifiers";
+}

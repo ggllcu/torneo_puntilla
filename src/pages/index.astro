@@ -1,3 +1,83 @@
 ---
-return Astro.redirect("/mens/qualifiers", 302);
+import Base from "../layouts/Base.astro";
+import { CATEGORY_LABEL } from "../lib/display";
+import { defaultTab } from "../lib/routes";
+import type { Category } from "../lib/types";
+
+Astro.response.headers.set("Cache-Control", "no-store");
+
+const tab = defaultTab(new Date());
+// Saturday order of play, with the organizers' start times.
+const categories: { id: Category; saturday: string; sunday: string }[] = [
+	{ id: "womens", saturday: "09:00", sunday: "13:30" },
+	{ id: "mens", saturday: "12:30", sunday: "16:30" },
+	{ id: "mixed", saturday: "16:00", sunday: "09:30" },
+];
 ---
+
+<Base title="La Puntilla Beach Volley">
+	<header class="hero">
+		<p class="eyebrow">Playa de La Puntilla · 17–18 Oct</p>
+		<h1>Beach Volley Tournament</h1>
+		<p class="muted">Pick a category to see the schedule and results.</p>
+	</header>
+
+	<nav class="categories" aria-label="Categories">
+		{
+			categories.map((c) => (
+				<a class="category" data-category={c.id} href={`/${c.id}/${tab}`}>
+					<span class="label">{CATEGORY_LABEL[c.id]}</span>
+					<span class="times">
+						Sat {c.saturday} · Sun {c.sunday}
+					</span>
+				</a>
+			))
+		}
+	</nav>
+</Base>
+
+<style>
+	.hero {
+		padding: 28px 0 8px;
+	}
+	.eyebrow {
+		margin: 0;
+		font-size: 13px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--accent);
+	}
+	h1 {
+		margin: 6px 0 8px;
+		font-size: 30px;
+		letter-spacing: -0.02em;
+	}
+	.categories {
+		display: grid;
+		gap: 12px;
+		margin-top: 20px;
+	}
+	.category {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 20px;
+		border-radius: var(--radius);
+		background: var(--cat);
+		color: #fff;
+		text-decoration: none;
+		box-shadow: var(--shadow);
+	}
+	.category:active {
+		transform: scale(0.98);
+	}
+	.label {
+		font-size: 24px;
+		font-weight: 800;
+	}
+	.times {
+		font-size: 14px;
+		opacity: 0.9;
+	}
+</style>
